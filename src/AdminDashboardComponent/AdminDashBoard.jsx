@@ -18,7 +18,6 @@ import { RiArrowDropDownLine } from "react-icons/ri";
 import { ImCross } from "react-icons/im";
 import { Outlet } from "react-router-dom";
 // import Doctors from "./AddDoctor";
-
 import { Routes, Route, NavLink, Link } from "react-router-dom";
 import AddDoctor from "./AddDoctor";
 
@@ -216,7 +215,7 @@ export function ManageUsers() {
 export function ManageDoctors() {
   return (
     <div className="p-6">
-      <AddDoctor />
+      <AddDoctor/>
     </div>
   );
 }
@@ -231,8 +230,8 @@ export function AppointmentHistory() {
   const appointments = [
     {
       id: 1,
-      patient: "Mansa",
-      doctor: "Dr.Karna",
+      patient: "Ananaya K g",
+      doctor: "Dr.Niranajan",
       date: "26/02/2026",
       time: "12:20pm",
       status: "Completed",

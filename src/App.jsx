@@ -7,17 +7,15 @@ import RoutingPage from './RoutersComponent/RoutingPage'
 
 
 function App() {
-  
-
   return (
     <>
       <div>
+        
         <RoutingPage/>
+        <log/>
+
       </div>
-      
-  
     </>
   )
 }
-
 export default App

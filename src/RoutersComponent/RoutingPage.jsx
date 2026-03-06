@@ -17,7 +17,9 @@ function RoutingPage() {
   return (
 
     <div>
+
       <Routes>
+        
         <Route path="/aboutus" element={<HomePage3 />} />
         <Route path="/about-us" element={<HomePage3 />} />
         <Route path="/login" element={<HomePage2 />} />
@@ -66,6 +68,8 @@ function RoutingPage() {
           <Route path="search" element={<Search />} />
         </Route>
      </Routes>
+     
+
     </div>
   );
 }

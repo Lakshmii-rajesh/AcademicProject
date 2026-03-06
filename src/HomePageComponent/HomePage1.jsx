@@ -19,8 +19,11 @@ function HomePage1() {
     <div id="HomePage"  className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-md">
+        
         <div className="container mx-auto flex justify-between items-center p-4 ">
+      
           <h1 className="text-2xl font-bold tracking-wide">
+            
             <span className="text-pink-200">+</span>  CUREONIX
           </h1>
           <nav className="space-x-6 hidden md:block">
@@ -98,7 +101,7 @@ function HomePage1() {
         </h2>
         <p className="text-gray-700 max-w-2xl mx-auto">
           We provide easy online appointments, patient management, doctor
-          scheduling, and hospital facilities all in one system. Your health and
+          scheduling, and hospital facilities all in one system. Your health and    
           time are our priority.
         </p>
       </section>
