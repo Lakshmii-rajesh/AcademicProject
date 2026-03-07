@@ -8,7 +8,13 @@ import WebLogDoctor from "../LoginComponent/WebLogDoctor";
 import WebLogAdmin from "../LoginComponent/WebLogAdmin";
 import AddDoctor from "../AdminDashboardComponent/AddDoctor";
 import AdminDashBoard,{ADashboard, ManageDoctors, ManagePatients, AppointmentHistory, ManageUsers, NewQueries, PatientSearch} from "../AdminDashBoardComponent/AdminDashBoard";
-import PatientDashboard,{PDashboard,BookAppointment,AppointmentHistoryPatient,MedicalHistory} from "../PatientDashboardComponent/PatientDashboard";
+import PatientDashboard, {
+  PDashboard,
+  BookAppointment,
+  AppointmentHistoryPatient,
+  MedicalHistory,
+  
+} from "../PatientDashboardComponent/PatientDashboard"
 
 import DoctorDashboard,{DDashboard,Profile,Appointments,Search,Patients} from "../DoctorDashboardComponent/DoctorDashboard";
 import CombinedHome from "../HomePageComponent/CombinedHome";
@@ -50,12 +56,47 @@ function RoutingPage() {
     <Route path="queries" element={<NewQueries />} />
   </Route>
 
-  <Route path="patient-dashboard" element={<PatientDashboard />}>
+  <Route path="patient-dashboard" element={< PatientDashboard/>}>
     <Route index element={<PDashboard />} />
     <Route path="book" element={<BookAppointment />} />
     <Route path="history" element={<AppointmentHistoryPatient />} />
     <Route path="medical" element={<MedicalHistory />} />
   </Route>
+
+
+{/* 
+   <Route path="/" element={<Navigate to="/patient" />} />
+
+      <Route path="/patient" element={<PatientDashboard />}>
+
+        <Route index element={<PDashboard />} />
+
+        <Route
+          path="book"
+          element={
+            <BookAppointment
+              appointments={appointments}
+              setAppointments={setAppointments}
+            />
+          }
+        />
+
+        <Route
+          path="history"
+          element={
+            <AppointmentHistoryPatient appointments={appointments} />
+          }
+        />
+
+        <Route path="medical" element={<MedicalHistory />} />
+        <Route path="prescription" element={<Prescriptions />} />
+        <Route path="bills" element={<Bills />} />
+        <Route path="profile" element={<PProfile />} />
+
+      </Route>
+
+ */}
+
 
   <Route path="/Doctor-dashboard" element={<DoctorDashboard />}>
     <Route index element={<DDashboard />} />

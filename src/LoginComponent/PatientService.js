@@ -5,7 +5,7 @@ const baseURL = "https://localhost:7077/api/Regester";
 
 const axiosInstance = axios.create({
   baseURL,
-  timeout: 10000, // 10 seconds
+  timeout: 50000, // 50 seconds
 });
 
 // Register API

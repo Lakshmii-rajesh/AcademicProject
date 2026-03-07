@@ -31,7 +31,7 @@ function PatientRegister() {
         className="w-full md:w-1/2 h-full mr-220 flex justify-center items-center md:px-20 relative z-10"
       >
         <div className="w-full rounded-3xl px-5 py-2 bg-white/30 backdrop-blur-xl shadow-2xl border border-white/40">
-          <img src="/logo.png" className="h-20 w-20 object-cover mx-auto rounded-full mb-3" alt="logo" />
+          <img src="/logo.jpeg" className="h-20 w-20 object-cover mx-auto rounded-full mb-3" alt="logo" />
 
           {/* Name */}
           <input

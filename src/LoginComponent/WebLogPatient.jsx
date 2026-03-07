@@ -35,7 +35,7 @@ function WebLogPatient() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="relative z-10 w-[90%] sm:w-100">
         <div className="w-full max-w-md rounded-3xl p-6 bg-white/30 backdrop-blur-xl shadow-2xl border border-white/40">
-          <img src="/logo.png" className="h-20 w-20 rounded-full object-cover mx-auto mb-6" alt="logo" />
+          <img src="logo.jpeg" className="h-20 w-20 rounded-full object-cover mx-auto mb-6" alt="logo" />
 
           {forgot ? (
             <>
