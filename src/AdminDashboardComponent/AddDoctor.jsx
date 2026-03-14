@@ -1,178 +1,285 @@
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
 
-function AddDoctor() {
+export default function AddDoctor() {
 
-  const [page, setPage] = useState("manage");
+  const [view, setView] = useState("manage");
+  const [doctors, setDoctors] = useState([]);
+  const [preview, setPreview] = useState(null);
+  const [editIndex, setEditIndex] = useState(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    specialization: "",
+    fees: "",
+    contact: "",
+    email: "",
+    password: "",
+    image: ""
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm({ ...form, image: file });
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (editIndex !== null) {
+      const updated = [...doctors];
+      updated[editIndex] = { ...form, preview };
+      setDoctors(updated);
+      setEditIndex(null);
+    } else {
+      setDoctors([...doctors, { ...form, preview }]);
+    }
+
+    setForm({
+      name: "",
+      specialization: "",
+      fees: "",
+      contact: "",
+      email: "",
+      password: "",
+      image: ""
+    });
+
+    setPreview(null);
+    setView("manage");
+  };
+
+  const handleEdit = (index) => {
+    const doc = doctors[index];
+    setForm(doc);
+    setPreview(doc.preview);
+    setEditIndex(index);
+    setView("add");
+  };
+
+  const handleDelete = (index) => {
+    const updated = doctors.filter((_, i) => i !== index);
+    setDoctors(updated);
+  };
 
   return (
-    <div className="p-6">
-      <div className="mb-5">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 mr-3 rounded"
-          onClick={() => setPage("manage")}
-        >
-          Manage Doctors
-        </button>
 
+    <div className="p-8 bg-gray-100 min-h-screen">
+
+      <h1 className="text-2xl font-bold mb-6">Doctor Management</h1>
+
+      {/* Buttons */}
+      <div className="flex gap-4 mb-6">
         <button
-          className="bg-green-500 text-white px-4 py-2 rounded"
-          onClick={() => setPage("add")}
+          onClick={() => setView("add")}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Add Doctor
         </button>
-      </div>
-
-      {page === "add" ? <AddDoctorDetails /> : <ManageDoctors />}
-
-    </div>
-  );
-}
-
-/* ================= ADD DOCTOR ================= */
-
-function AddDoctorDetails() {
-
-  const { register, handleSubmit, formState: { errors }, watch } = useForm();
-  const [preview, setPreview] = useState(null);
-
-  const onSubmit = (data) => {
-    console.log(data);
-    alert("Doctor Added Successfully");
-  };
-
-  const password = watch("password");
-
-  function imageChange(e) {
-    const file = e.target.files[0];
-    if (file) {
-      setPreview(URL.createObjectURL(file));
-    }
-  }
-
-  return (
-    <div className="bg-white p-6 shadow rounded w-3/4">
-
-      <h2 className="text-xl font-semibold mb-4">Add Doctor</h2>
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-
-        <input
-          className="border p-2 w-full mb-2"
-          placeholder="Specialization"
-          {...register("specialization", { required: true })}
-        />
-        {errors.specialization && <p className="text-red-500">Required</p>}
-
-        <input
-          className="border p-2 w-full mb-2"
-          placeholder="Doctor Name"
-          {...register("doctorName", { required: true })}
-        />
-
-        <textarea
-          className="border p-2 w-full mb-2"
-          placeholder="Clinic Address"
-          {...register("clinicAddress", { required: true })}
-        />
-
-        <input
-          type="number"
-          className="border p-2 w-full mb-2"
-          placeholder="Fees"
-          {...register("fees")}
-        />
-
-        <input
-          type="number"
-          className="border p-2 w-full mb-2"
-          placeholder="Contact"
-          {...register("contact")}
-        />
-
-        <input
-          type="email"
-          className="border p-2 w-full mb-2"
-          placeholder="Email"
-          {...register("email")}
-        />
-
-        <input
-          type="file"
-          className="mb-3"
-          {...register("photo")}
-          onChange={imageChange}
-        />
-
-        {preview && (
-          <img
-            src={preview}
-            alt="doctor"
-            className="w-32 h-32 mb-3"
-          />
-        )}
-
-        <input
-          type="password"
-          className="border p-2 w-full mb-2"
-          placeholder="Password"
-          {...register("password", { required: true })}
-        />
-
-        <input
-          type="password"
-          className="border p-2 w-full mb-2"
-          placeholder="Confirm Password"
-          {...register("confirmPassword", {
-            validate: (value) =>
-              value === password || "Password not match"
-          })}
-        />
 
         <button
-          type="submit"
-          className="bg-blue-600 text-white px-5 py-2 rounded"
+          onClick={() => setView("manage")}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
         >
-          Submit
+          Manage Doctors
         </button>
+      </div>
 
-      </form>
+      {/* ADD DOCTOR FORM */}
+      {view === "add" && (
+
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-6 rounded-lg shadow flex flex-col  md:grid-cols-2 gap-4"
+        >
+
+          <input
+            type="text"
+            name="name"
+            placeholder="Doctor Name"
+            value={form.name}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            required
+          />
+
+          <input
+            type="text"
+            name="specialization"
+            placeholder="Specialization"
+            value={form.specialization}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            required
+          />
+
+          <input
+            type="number"
+            name="fees"
+            placeholder="Consultation Fees"
+            value={form.fees}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            required
+          />
+
+          <input
+            type="text"
+            name="contact"
+            placeholder="Contact Number"
+            value={form.contact}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            required
+          />
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            required
+          />
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            required
+          />
+
+          {/* Image Upload */}
+          <div className="col-span-2 flex items-center gap-4">
+
+            {preview && (
+              <img
+                src={preview}
+                alt="preview"
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            )}
+
+            <label className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+              Choose Image
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImage}
+              />
+            </label>
+
+          </div>
+
+          {/* Submit Button */}
+          <button
+            className=" bg-blue-600 text-white py-2 rounded"
+          >
+            {editIndex !== null ? "Update Doctor" : "Add Doctor"}
+          </button>
+
+        </form>
+      )}
+
+      {/* MANAGE DOCTORS */}
+      {view === "manage" && (
+
+        <div className="bg-white p-6 rounded-lg shadow">
+
+          <h2 className="text-xl font-semibold mb-4">Doctors List</h2>
+
+          <div className="overflow-x-auto">
+
+            <table className="w-full border">
+
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="p-2">Image</th>
+                  <th className="p-2">Name</th>
+                  <th className="p-2">Specialization</th>
+                  <th className="p-2">Fees</th>
+                  <th className="p-2">Contact</th>
+                  <th className="p-2">Email</th>
+                  <th className="p-2">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {doctors.length === 0 ? (
+
+                  <tr>
+                    <td colSpan="7" className="text-center p-4">
+                      No Doctors Added
+                    </td>
+                  </tr>
+
+                ) : (
+
+                  doctors.map((doc, index) => (
+
+                    <tr key={index} className="text-center border-t">
+
+                      <td className="p-2">
+                        {doc.preview && (
+                          <img
+                            src={doc.preview}
+                            alt="doctor"
+                            className="w-12 h-12 rounded-full object-cover mx-auto"
+                          />
+                        )}
+                      </td>
+
+                      <td>{doc.name}</td>
+                      <td>{doc.specialization}</td>
+                      <td>₹{doc.fees}</td>
+                      <td>{doc.contact}</td>
+                      <td>{doc.email}</td>
+
+                      <td className="space-x-2">
+
+                        <button
+                          onClick={() => handleEdit(index)}
+                          className="bg-yellow-500 text-white px-3 py-1 rounded"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(index)}
+                          className="bg-red-600 text-white px-3 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  ))
+
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+      )}
+
     </div>
   );
 }
-
-/* ================= MANAGE DOCTORS ================= */
-
-function ManageDoctors() {
-
-  return (
-    <div>
-
-      <h2 className="text-2xl font-semibold mb-4">
-        Doctors List
-      </h2>
-
-      <table className="w-full border">
-
-        <thead className="bg-blue-400 text-white">
-          <tr>
-            <th className="border p-2">Name</th>
-            <th className="border p-2">Specialization</th>
-            <th className="border p-2">Address</th>
-            <th className="border p-2">Fees</th>
-            <th className="border p-2">Contact</th>
-            <th className="border p-2">Email</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {/* doctor data will come here later */}
-        </tbody>
-
-      </table>
-
-    </div>
-  );
-}
-
-export default AddDoctor;

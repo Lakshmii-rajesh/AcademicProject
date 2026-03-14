@@ -88,9 +88,7 @@ export default function AdminDashboard() {
           <SidebarItem to="." icon={<FaHome />} label="Dashboard" />
           <SidebarItem to="users" icon={<FaUsers />} label="Manage Users" />
           <SidebarItem to="doctors" icon={<FaUserMd />} label=" AddDoctors" />
-          <SidebarItem to="patients" icon={<FaUserInjured />} label="Patients" />
           <SidebarItem to="appointments" icon={<FaClipboardList />} label="Appointments" />
-          <SidebarItem to="search" icon={<FaSearch />} label="Patient Search" />
         </nav>
       </div>
 
@@ -103,6 +101,7 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 
 //  Sidebar Item 
 function SidebarItem({ to, icon, label }) {
@@ -127,27 +126,22 @@ export function ADashboard() {
     {
       icon: <FaUserCog size={50} color="blue" />,
       headline: "Manage Users",
-      link: "/users",
+      link: "/admin-dashboard/users",
     },
     {
       icon: <HiUserGroup size={50} color="blue" />,
       headline: "Manage Doctors",
-      link: "/doctors",
-    },
-    {
-      icon: <FaUserInjured size={50} color="blue" />,
-      headline: "Manage Patients",
-      link: "/patients",
+      link: "/admin-dashboard/doctors",
     },
     {
       icon: <VscTerminal size={50} color="blue" />,
       headline: "Appointments",
-      link: "/appointments",
+      link: "/admin-dashboard/appointments",
     },
     {
       icon: <FaFileAlt size={50} color="blue" />,
       headline: "New Queries",
-      link: "/queries",
+      link: "/admin-dashboard/queries",
     },
   ];
 
@@ -155,7 +149,7 @@ export function ADashboard() {
     <>
       <h1 className="text-4xl font-bold mb-6">Admin Dashboard</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-pointer">
+      <div className="grid grid-cols-2 grid-rows-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-pointer">
         {array.map((e, index) => (
           <Link
             key={index}
@@ -175,6 +169,7 @@ export function ADashboard() {
 
 //  Users
 export function ManageUsers() {
+  const [isOpen] = useState(false);
   const users = [
     {
       name: "Megha",
@@ -183,6 +178,15 @@ export function ManageUsers() {
     },
   ];
   return (
+    <>
+    <div className={"p-6 transition-all duration-300 " + (isOpen ? "ml-64" : "ml-0")}>
+      <h2 className="text-2xl font-bold mb-4">Patient Search</h2>
+      <input
+        type="text"
+        placeholder="Search..."
+        className="p-2 border rounded w-full max-w-md"
+      />
+    </div>
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Users List</h2>
 
@@ -208,7 +212,9 @@ export function ManageUsers() {
         </table>
       </div>
     </div>
+    </>
   );
+  
 }
 
 //  Doctors
@@ -220,71 +226,101 @@ export function ManageDoctors() {
   );
 }
 
-// Patients
-export function ManagePatients() {
-  return <h2 className="text-2xl font-bold">Patients List</h2>;
-}
 
 //  Appointment History
+
 export function AppointmentHistory() {
+
   const appointments = [
     {
       id: 1,
-      patient: "Ananaya K g",
-      doctor: "Dr.Niranajan",
-      date: "26/02/2026",
-      time: "12:20pm",
-      status: "Completed",
+      patient: "Rahul Kumar",
+      doctor: "Dr. Meena",
+      department: "Cardiology",
+      date: "25 Feb 2026",
+      time: "10:30 AM",
+      status: "Completed"
     },
+    {
+      id: 2,
+      patient: "Anjali Sharma",
+      doctor: "Dr. Ramesh",
+      department: "Dermatology",
+      date: "26 Feb 2026",
+      time: "12:00 PM",
+      status: "Cancelled"
+    },
+    {
+      id: 3,
+      patient: "Kiran Gowda",
+      doctor: "Dr. Priya",
+      department: "Orthopedic",
+      date: "27 Feb 2026",
+      time: "03:15 PM",
+      status: "Pending"
+    }
   ];
+
+  const statusColor = (status) => {
+    if (status === "Completed")
+      return "bg-green-100 text-green-700";
+    if (status === "Cancelled")
+      return "bg-red-100 text-red-700";
+    return "bg-yellow-100 text-yellow-700";
+  };
+
   return (
-    <div className="p-6 ">
-      <h1 className="text-3xl font-bold mb-6">Appointment History</h1>
+    <div className="p-6 bg-gray-100 min-h-screen">
 
-      <table className="w-full border">
-        <thead className="bg-blue-400 text-white">
-          <tr>
-            <th className="border p-2">ID</th>
-            <th className="border p-2">Patient</th>
-            <th className="border p-2">Doctor</th>
-            <th className="border p-2">Date</th>
-            <th className="border p-2">Time</th>
-            <th className="border p-2">Status</th>
-          </tr>
-        </thead>
+      <h1 className="text-3xl font-semibold mb-6">
+        Appointment History
+      </h1>
 
-        <tbody>
-          {appointments.map((e) => (
-            <tr key={e.id} className="text-center">
-              <td className="border p-2">{e.id}</td>
-              <td className="border p-2">{e.patient}</td>
-              <td className="border p-2">{e.doctor}</td>
-              <td className="border p-2">{e.date}</td>
-              <td className="border p-2">{e.time}</td>
-              <td className="border p-2">{e.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {appointments.map((item) => (
+          <div
+            key={item.id}
+            className="bg-white rounded-xl shadow-md p-5 hover:shadow-xl transition"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold">
+                {item.patient}
+              </h2>
+
+              <span
+                className={`px-3 py-1 text-sm rounded-full ${statusColor(
+                  item.status
+                )}`}
+              >
+                {item.status}
+              </span>
+            </div>
+
+            <p className="text-gray-600">
+              Doctor : <span className="font-medium">{item.doctor}</span>
+            </p>
+
+            <p className="text-gray-600">
+              Department :{" "}
+              <span className="font-medium">
+                {item.department}
+              </span>
+            </p>
+
+            <div className="flex justify-between mt-4 text-sm text-gray-500">
+              <span>Date : {item.date}</span>
+              <span>Time : {item.time}</span>
+            </div>
+
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-// Patient Search
-export function PatientSearch() {
-  const [isOpen] = useState(false);
 
-  return (
-    <div className={"p-6 transition-all duration-300 " + (isOpen ? "ml-64" : "ml-0")}>
-      <h2 className="text-2xl font-bold mb-4">Patient Search</h2>
-      <input
-        type="text"
-        placeholder="Search..."
-        className="p-2 border rounded w-full max-w-md"
-      />
-    </div>
-  );
-}
+
 
 // Queries
 export function NewQueries() {

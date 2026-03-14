@@ -7,7 +7,7 @@ import WebLogPatient from "../LoginComponent/WebLogPatient";
 import WebLogDoctor from "../LoginComponent/WebLogDoctor";
 import WebLogAdmin from "../LoginComponent/WebLogAdmin";
 import AddDoctor from "../AdminDashboardComponent/AddDoctor";
-import AdminDashBoard,{ADashboard, ManageDoctors, ManagePatients, AppointmentHistory, ManageUsers, NewQueries, PatientSearch} from "../AdminDashBoardComponent/AdminDashBoard";
+import AdminDashBoard,{ADashboard, ManageDoctors,  AppointmentHistory, ManageUsers, NewQueries} from "../AdminDashBoardComponent/AdminDashBoard";
 import PatientDashboard, {
   PDashboard,
   BookAppointment,
@@ -50,9 +50,9 @@ function RoutingPage() {
     <Route index element={<ADashboard />} />
     <Route path="users" element={<ManageUsers />} />
     <Route path="doctors" element={<ManageDoctors />} />
-    <Route path="patients" element={<ManagePatients />} />
+    {/* <Route path="patients" element={<ManagePatients />} /> */}
     <Route path="appointments" element={<AppointmentHistory />} />
-    <Route path="search" element={<PatientSearch />} />
+    {/* <Route path="search" element={<PatientSearch />} /> */}
     <Route path="queries" element={<NewQueries />} />
   </Route>
 
@@ -108,7 +108,7 @@ function RoutingPage() {
 
 </Routes>
      
-
+PatientSearch
     </div>
   );
 }
