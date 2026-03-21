@@ -4,10 +4,10 @@ const images = [
   "https://admin.expatica.com/ae/wp-content/uploads/sites/15/2023/11/Healthcare-basics.jpg",
   "/i6.png"   // public folder image
 ];
-
+ 
 function HomePage1() {
   const [current, setCurrent] = useState(0);
-
+ 
   // Auto slide effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -19,11 +19,11 @@ function HomePage1() {
     <div id="HomePage"  className="min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-md">
-        
+       
         <div className="container mx-auto flex justify-between items-center p-4 ">
-      
+     
           <h1 className="text-2xl font-bold tracking-wide">
-            
+           
             <span className="text-pink-200">+</span>  CUREONIX
           </h1>
           <nav className="space-x-6 hidden md:block">
@@ -34,14 +34,7 @@ function HomePage1() {
                       ?.scrollIntoView({ behavior: "smooth" })
                   }>
                   Home</button>
-            <button  className="hover:text-yellow-300"
-                  onClick={() =>
-                    document
-                      .getElementById("galleryDiv")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                >
-               About us </button>
+                  <Link to="/aboutus">About Us</Link>
             <button
                   onClick={() =>
                     document

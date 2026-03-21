@@ -4,6 +4,7 @@ import { RiArrowDropDownLine } from "react-icons/ri";
 import { ImCross } from "react-icons/im";
 import { MdEmail, MdLocationCity, MdPhone } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
+import axios from "axios";
 import PropTypes from "prop-types";
 import { FaHeartbeat, FaTint } from "react-icons/fa";
 import React, { useState, useRef, useEffect } from "react";
@@ -14,7 +15,7 @@ import {
   FaFileAlt,
   FaNotesMedical
 } from "react-icons/fa";
-
+const BASE_URL = "https://localhost:7077/api/BookAppointment";
 // Main Patient Dashboard Component
 export default function PatientDashboard() {
   const [isOpen, setIsOpen] = useState(false); // controls sidebar open/close
@@ -72,9 +73,8 @@ export default function PatientDashboard() {
 
       {/* SIDEBAR */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white transform transition-transform duration-300 z-40 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white transform transition-transform duration-300 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Sidebar header */}
         <div className="flex justify-between items-center m-4 px-4 py-4 border-b">
@@ -110,8 +110,7 @@ function SidebarItem({ to, icon, label }) {
       to={to}
       end={to === "."} // set active only for current path
       className={({ isActive }) =>
-        `flex items-center gap-3 px-6 py-3 hover:bg-blue-200 ${
-          isActive ? "bg-blue-300 font-semibold" : ""
+        `flex items-center gap-3 px-6 py-3 hover:bg-blue-200 ${isActive ? "bg-blue-300 font-semibold" : ""
         }`
       }
     >
@@ -181,11 +180,13 @@ function StatCard({ title, value }) {
   );
 }
 
-// BOOK APPOINTMENT COMPONENT
 
-export function BookAppointment({ appointments, setAppointments }) {
+// BOOK APPOINTMENT COMPONENT
+export function BookAppointment() {
 
   // Form states
+  const [appointments, setAppointments] = useState([]);
+
   const [patientName, setPatientName] = useState("");
   const [contact, setContact] = useState("");
   const [doctor, setDoctor] = useState("");
@@ -195,73 +196,38 @@ export function BookAppointment({ appointments, setAppointments }) {
   const [city, setCity] = useState("");
 
   // Handle booking logic
-  const handleBook = () => {
+const handleBook = async () => {
+  if (!patientName || !contact || !doctor || !treatment || !date || !time || !city) {
+    alert("Please fill all fields");
+    return;
+  }
 
-    // ✅ Validate that all fields are filled
-    if (!patientName || !contact || !doctor || !treatment || !date || !time || !city) {
-      alert("Please fill in all fields before booking");
-      return;
-    }
-
-    const selectedDate = new Date(date + "T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Validate date
-    if (selectedDate <= today) {
-      alert("Please select a future date");
-      return;
-    }
-
-    // Sunday check
-    if (selectedDate.getDay() === 0) {
-      alert("Sunday appointments are not available");
-      return;
-    }
-
-    // Check if same slot already booked
-    const alreadyBooked = appointments.some(
-      (a) =>
-        a.doctor === doctor &&
-        a.date === date &&
-        a.time === time
-    );
-
-    if (alreadyBooked) {
-      alert("This slot is already booked");
-      return;
-    }
-
-    // Add appointment
-    const newAppointment = {
-      patientName,
-      contact,
-      doctor,
-      treatment,
-      date,
-      time,
-      city,
-      status: "Pending"
-    };
-
-    setAppointments([...appointments, newAppointment]);
-
-    // Reset form
-    setPatientName("");
-    setContact("");
-    setDoctor("");
-    setTreatment("");
-    setDate("");
-    setTime("");
-    setCity("");
-
-    alert("Appointment booked successfully and sent for confirmation");
+  const newAppointment = {
+    patientName,
+    contactNumber: contact, // Matches backend model
+    doctorName: doctor,
+    reason: treatment,
+    appointmentDate: date,
+    timeSlot: time,
+    city
   };
 
+  try {
+    // FIX: Send 'newAppointment' and use the correct sub-route
+    const response = await axios.post(`${BASE_URL}/BookAppointment`, newAppointment);
+
+    alert("Appointment booked successfully");
+    setAppointments([...appointments, response.data]);
+    // ... rest of your reset logic
+  } catch (error) {
+    console.error(error);
+    alert("Error saving appointment");
+  }
+};
   return (
     <div
       className="min-h-screen w-full bg-cover bg-center bg-no-repeat flex items-center px-10"
-      style={{ backgroundImage: "url('/image copy.png')" }}
+      style={{ backgroundImage: "url('/bookappointmentImage.png')" }}
     >
 
       <div className="w-full md:w-[520px] p-10 shadow-xl flex flex-col justify-center rounded-lg">
@@ -290,6 +256,7 @@ export function BookAppointment({ appointments, setAppointments }) {
           />
 
           {/* Select treatment */}
+          {/* Select treatment */}
           <select
             className="border p-2 rounded"
             value={treatment}
@@ -298,17 +265,17 @@ export function BookAppointment({ appointments, setAppointments }) {
               setDoctor(""); // reset doctor if treatment changes
             }}
           >
-            <option>Select Treatment</option>
-            <option>Dental</option>
-            <option>Cardiology</option>
-            <option>Eye</option>
-            <option>Orthopedic</option>
-            <option>Neurology</option>
-            <option>Dermatology</option>
-            <option>ENT</option>
-            <option>Gynecology</option>
-            <option>Pediatrics</option>
-            <option>General Medicine</option>
+            <option value="">Select Treatment</option>
+            <option value="Dental">Dental</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Eye">Eye</option>
+            <option value="Orthopedic">Orthopedic</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="ENT">ENT</option>
+            <option value="Gynecology">Gynecology</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="General Medicine">General Medicine</option>
           </select>
 
           {/* Select doctor */}
@@ -317,105 +284,115 @@ export function BookAppointment({ appointments, setAppointments }) {
             value={doctor}
             onChange={(e) => setDoctor(e.target.value)}
           >
-            <option>Select Doctor</option>
+            <option value="">Select Doctor</option>
+
             {treatment === "Dental" && (
               <>
-                <option>Dr. Smith</option>
-                <option>Dr. John</option>
-                <option>Dr. Priya</option>
-                <option>Dr. Rahul</option>
-                <option>Dr. Sneha</option>
-                <option>Dr. Kiran</option>
+                <option value="Dr. Smith">Dr. Smith</option>
+                <option value="Dr. John">Dr. John</option>
+                <option value="Dr. Priya">Dr. Priya</option>
+                <option value="Dr. Rahul">Dr. Rahul</option>
+                <option value="Dr. Sneha">Dr. Sneha</option>
+                <option value="Dr. Kiran">Dr. Kiran</option>
               </>
             )}
+
             {treatment === "Cardiology" && (
               <>
-                <option>Dr. Meera</option>
-                <option>Dr. Arjun</option>
-                <option>Dr. Vikram</option>
-                <option>Dr. Neha</option>
-                <option>Dr. Rohan</option>
-                <option>Dr. Tanya</option>
+                <option value="Dr. Meera">Dr. Meera</option>
+                <option value="Dr. Arjun">Dr. Arjun</option>
+                <option value="Dr. Vikram">Dr. Vikram</option>
+                <option value="Dr. Neha">Dr. Neha</option>
+                <option value="Dr. Rohan">Dr. Rohan</option>
+                <option value="Dr. Tanya">Dr. Tanya</option>
               </>
             )}
+
             {treatment === "Eye" && (
               <>
-                <option>Dr. Aditi</option>
-                <option>Dr. Sameer</option>
-                <option>Dr. Kavya</option>
-                <option>Dr. Rajesh</option>
-                <option>Dr. Anil</option>
-                <option>Dr. Priya</option>
+                <option value="Dr. Aditi">Dr. Aditi</option>
+                <option value="Dr. Sameer">Dr. Sameer</option>
+                <option value="Dr. Kavya">Dr. Kavya</option>
+                <option value="Dr. Rajesh">Dr. Rajesh</option>
+                <option value="Dr. Anil">Dr. Anil</option>
+                <option value="Dr. Priya">Dr. Priya</option>
               </>
             )}
+
             {treatment === "Orthopedic" && (
               <>
-                <option>Dr. Ravi</option>
-                <option>Dr. Nisha</option>
-                <option>Dr. Sameer</option>
-                <option>Dr. Kiran</option>
-                <option>Dr. Tanya</option>
-                <option>Dr. Arjun</option>
+                <option value="Dr. Ravi">Dr. Ravi</option>
+                <option value="Dr. Nisha">Dr. Nisha</option>
+                <option value="Dr. Sameer">Dr. Sameer</option>
+                <option value="Dr. Kiran">Dr. Kiran</option>
+                <option value="Dr. Tanya">Dr. Tanya</option>
+                <option value="Dr. Arjun">Dr. Arjun</option>
               </>
             )}
+
             {treatment === "Neurology" && (
               <>
-                <option>Dr. Ananya</option>
-                <option>Dr. Raj</option>
-                <option>Dr. Simran</option>
-                <option>Dr. Varun</option>
-                <option>Dr. Meera</option>
-                <option>Dr. Rohan</option>
+                <option value="Dr. Ananya">Dr. Ananya</option>
+                <option value="Dr. Raj">Dr. Raj</option>
+                <option value="Dr. Simran">Dr. Simran</option>
+                <option value="Dr. Varun">Dr. Varun</option>
+                <option value="Dr. Meera">Dr. Meera</option>
+                <option value="Dr. Rohan">Dr. Rohan</option>
               </>
             )}
+
             {treatment === "Dermatology" && (
               <>
-                <option>Dr. Sneha</option>
-                <option>Dr. Priya</option>
-                <option>Dr. Kavya</option>
-                <option>Dr. Arjun</option>
-                <option>Dr. Neha</option>
-                <option>Dr. Sameer</option>
+                <option value="Dr. Sneha">Dr. Sneha</option>
+                <option value="Dr. Priya">Dr. Priya</option>
+                <option value="Dr. Kavya">Dr. Kavya</option>
+                <option value="Dr. Arjun">Dr. Arjun</option>
+                <option value="Dr. Neha">Dr. Neha</option>
+                <option value="Dr. Sameer">Dr. Sameer</option>
               </>
             )}
+
             {treatment === "ENT" && (
               <>
-                <option>Dr. Rajesh</option>
-                <option>Dr. Meera</option>
-                <option>Dr. Anil</option>
-                <option>Dr. Nisha</option>
-                <option>Dr. Varun</option>
-                <option>Dr. Tanya</option>
+                <option value="Dr. Rajesh">Dr. Rajesh</option>
+                <option value="Dr. Meera">Dr. Meera</option>
+                <option value="Dr. Anil">Dr. Anil</option>
+                <option value="Dr. Nisha">Dr. Nisha</option>
+                <option value="Dr. Varun">Dr. Varun</option>
+                <option value="Dr. Tanya">Dr. Tanya</option>
               </>
             )}
+
             {treatment === "Gynecology" && (
               <>
-                <option>Dr. Kavya</option>
-                <option>Dr. Ananya</option>
-                <option>Dr. Priya</option>
-                <option>Dr. Sneha</option>
-                <option>Dr. Meera</option>
-                <option>Dr. Nisha</option>
+                <option value="Dr. Kavya">Dr. Kavya</option>
+                <option value="Dr. Ananya">Dr. Ananya</option>
+                <option value="Dr. Priya">Dr. Priya</option>
+                <option value="Dr. Sneha">Dr. Sneha</option>
+                <option value="Dr. Meera">Dr. Meera</option>
+                <option value="Dr. Nisha">Dr. Nisha</option>
               </>
             )}
+
             {treatment === "Pediatrics" && (
               <>
-                <option>Dr. Rohan</option>
-                <option>Dr. Tanya</option>
-                <option>Dr. Anil</option>
-                <option>Dr. Priya</option>
-                <option>Dr. Sneha</option>
-                <option>Dr. Kavya</option>
+                <option value="Dr. Rohan">Dr. Rohan</option>
+                <option value="Dr. Tanya">Dr. Tanya</option>
+                <option value="Dr. Anil">Dr. Anil</option>
+                <option value="Dr. Priya">Dr. Priya</option>
+                <option value="Dr. Sneha">Dr. Sneha</option>
+                <option value="Dr. Kavya">Dr. Kavya</option>
               </>
             )}
+
             {treatment === "General Medicine" && (
               <>
-                <option>Dr. Raj</option>
-                <option>Dr. Arjun</option>
-                <option>Dr. Meera</option>
-                <option>Dr. Simran</option>
-                <option>Dr. Ravi</option>
-                <option>Dr. Nisha</option>
+                <option value="Dr. Raj">Dr. Raj</option>
+                <option value="Dr. Arjun">Dr. Arjun</option>
+                <option value="Dr. Meera">Dr. Meera</option>
+                <option value="Dr. Simran">Dr. Simran</option>
+                <option value="Dr. Ravi">Dr. Ravi</option>
+                <option value="Dr. Nisha">Dr. Nisha</option>
               </>
             )}
           </select>
@@ -426,33 +403,31 @@ export function BookAppointment({ appointments, setAppointments }) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
           >
-            <option>Select City</option>
-            <option>Bangalore</option>
-            <option>Mysore</option>
-            <option>Mangalore</option>
-            <option>Hubli</option>
-            <option>Dharwad</option>
-            <option>Belgaum</option>
-            <option>Davangere</option>
-            <option>Shimoga</option>
-            <option>Tumkur</option>
-            <option>Udupi</option>
-            <option>Bidar</option>
-            <option>Bellary</option>
-            <option>Raichur</option>
-            <option>Gulbarga</option>
-            <option>Chitradurga</option>
-            <option>Hassan</option>
-            <option>Mandya</option>
-            <option>Chikmagalur</option>
-            <option>Kolar</option>
-            <option>Karwar</option>
-            <option>Bagalkot</option>
-            <option>Bijapur</option>
-            <option>Other</option>
+            <option value="">Select City</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Mysore">Mysore</option>
+            <option value="Mangalore">Mangalore</option>
+            <option value="Hubli">Hubli</option>
+            <option value="Dharwad">Dharwad</option>
+            <option value="Belgaum">Belgaum</option>
+            <option value="Davangere">Davangere</option>
+            <option value="Shimoga">Shimoga</option>
+            <option value="Tumkur">Tumkur</option>
+            <option value="Udupi">Udupi</option>
+            <option value="Bidar">Bidar</option>
+            <option value="Bellary">Bellary</option>
+            <option value="Raichur">Raichur</option>
+            <option value="Gulbarga">Gulbarga</option>
+            <option value="Chitradurga">Chitradurga</option>
+            <option value="Hassan">Hassan</option>
+            <option value="Mandya">Mandya</option>
+            <option value="Chikmagalur">Chikmagalur</option>
+            <option value="Kolar">Kolar</option>
+            <option value="Karwar">Karwar</option>
+            <option value="Bagalkot">Bagalkot</option>
+            <option value="Bijapur">Bijapur</option>
+            <option value="Other">Other</option>
           </select>
-
-          {/* Date picker */}
           <input
             type="date"
             className="border p-2 rounded"
@@ -468,20 +443,19 @@ export function BookAppointment({ appointments, setAppointments }) {
               setDate(e.target.value);
             }}
           />
-
           {/* Time selection */}
           <select
             className="border p-2 rounded"
             value={time}
             onChange={(e) => setTime(e.target.value)}
           >
-            <option>Select Time</option>
-            <option>10:00 AM</option>
-            <option>11:00 AM</option>
-            <option>12:00 PM</option>
-            <option>02:00 PM</option>
-            <option>03:00 PM</option>
-            <option>04:00 PM</option>
+            <option value="">Select Time</option>
+            <option value="10:00 AM">10:00 AM</option>
+            <option value="11:00 AM">11:00 AM</option>
+            <option value="12:00 PM">12:00 PM</option>
+            <option value="02:00 PM">02:00 PM</option>
+            <option value="03:00 PM">03:00 PM</option>
+            <option value="04:00 PM">04:00 PM</option>
           </select>
 
           {/* Confirm button */}
@@ -499,19 +473,33 @@ export function BookAppointment({ appointments, setAppointments }) {
 }
 
 // Appointment History Component
-export function AppointmentHistoryPatient({ appointments, setAppointments }) {
+export function AppointmentHistoryPatient() {
 
-  const today = new Date().toISOString().split("T")[0];
+  const [appointments, setAppointments] = useState([]);
 
-  // Only upcoming appointments
-  const upcoming = appointments.filter(a => a.date >= today);
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
-  // Cancel appointment
-  const cancelAppointment = (indexToRemove) => {
-    const updated = appointments.filter((_, i) => i !== indexToRemove);
-    setAppointments(updated);
+  const fetchAppointments = async () => {
+    try {
+      const res = await axios.get(BASE_URL);
+      setAppointments(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
+  // Cancel appointment
+  const cancelAppointment = async (id) => {
+  try {
+   
+    await axios.delete(`${BASE_URL}/DeleteAppointment?id=${id}`);
+    fetchAppointments(); 
+  } catch (err) {
+    console.error(err);      
+  }
+};
   return (
     <div className="bg-white p-6 rounded-xl shadow-md">
 
@@ -536,7 +524,7 @@ export function AppointmentHistoryPatient({ appointments, setAppointments }) {
               </tr>
             </thead>
             <tbody>
-              {upcoming.map((a, i) => (
+              {appointments.map((a, i) => (
                 <tr key={i} className="text-center">
                   <td className="border p-2">{a.patientName}</td>
                   <td className="border p-2">{a.contact}</td>
@@ -563,7 +551,6 @@ export function AppointmentHistoryPatient({ appointments, setAppointments }) {
     </div>
   );
 }
-
 // Profile
 export function Profile({ patient }) {
   const [editing, setEditing] = useState(false);
@@ -657,9 +644,8 @@ export function Profile({ patient }) {
       <div className="mt-6 flex justify-center">
         <button
           onClick={handleEditToggle}
-          className={`px-6 py-2 rounded-full text-white font-semibold transition ${
-            editing ? "bg-green-500 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          className={`px-6 py-2 rounded-full text-white font-semibold transition ${editing ? "bg-green-500 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"
+            }`}
         >
           {editing ? "Save Profile" : "Edit Profile"}
         </button>

@@ -1,142 +1,168 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useForm } from "react-hook-form";
+
 function WebLogDoctor() {
+
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [forgot, setForgot] = useState(false);
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPass, setConfirmPass] = useState("");
-  const [message, setMessage] = useState("");
-  const [usersList, setUsersList] = useState([
-    { email: "lakshmirajesh@gmail.com", password: "123456" },
-    { email: "ananyakg@gmail.com", password: "7891011" },
-    { email: "meghacs@gmail.com", password: "121314" },
-    { email: "nandessh@gmail.com", password: "151617" },
-  ]);
-  const handleEmailChange = (e) => {
-    let value = e.target.value;
-    const atIndex = value.indexOf("@");
-    if (atIndex !== -1) {
-      const typedDomain = value.slice(atIndex + 1);
-      if (typedDomain === "") value = value + "gmail.com";
-    }
-    setEmail(value);
-  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setMessage("");
-
-    if (!email || !password || (!isLogin && !confirmPass)) {
-      setMessage("All fields are required!");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setMessage("Please enter a valid email!");
-      return;
-    }
-
-    if (password.length < 6) {
-      setMessage("Password must be at least 6 characters!");
-      return;
-    }
-
-    if (!isLogin && password !== confirmPass) {
-      setMessage("Passwords do not match!");
-      return;
-    }
-
-    if (isLogin) {
-      // Login check
-      const user = usersList.find(
-        (u) => u.email === email && u.password === password
-      );
-
-      if (user) {
-       
-        navigate("/Doctor-dashboard");
-      } else {
-        setMessage("Invalid email or password!");
-      }
+  const onSubmit = (data) => {
+    if (forgot) { 
+      console.log('forgot data', data);
+      alert('If an account exists we have sent reset instructions.');
     } else {
-      
-      const existingUser = usersList.find((u) => u.email === email);
-      if (existingUser) {
-        setMessage("User with this email already exists!");
-        return;
-      }
-      const newUser = { email, password };
-      setUsersList([...usersList, newUser]);
-      setMessage("Signup successful! You can now login.");
-      setIsLogin(true);
-      setEmail("");
-      setPassword("");
-      setConfirmPass("");
+      console.log("login data", data);
+
+      // login success
+      alert("Logged in successfully");
+
+      // navigate to admin dashboard
+      navigate("/doctor-dashboard");
     }
   };
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-indigo-300 to-purple-200 transition-all duration-500">
-      <div className="bg-white/90 backdrop-blur-md p-10 rounded-3xl shadow-lg shadow-purple-300/50 hover:shadow-xl transition-shadow duration-300 w-96">
-        <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">
-          {isLogin ? "Login" : "Create Account"}
-        </h2>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={handleEmailChange}
-            className="w-full p-3 mb-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:shadow-lg transition-all duration-300"
+  return (
+    <div 
+      className="h-screen pl-20 w-full flex justify-start items-center bg-cover bg-center"
+      style={{ backgroundImage: "url('LoginForm.jpeg')" }}
+    >
+
+      <div className="absolute inset-0 bg-black/40"></div>
+
+      <form 
+        onSubmit={handleSubmit(onSubmit)} 
+        className="relative z-10 w-[90%] sm:w-100"
+      >
+        <div className="w-full max-w-md rounded-3xl p-6 bg-white/30 backdrop-blur-xl shadow-2xl border border-white/40">
+
+          <img 
+            src="public\project Logo.png" 
+            className="h-20 w-20 rounded-full object-cover mx-auto mb-6" 
+            alt="logo"
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 mb-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:shadow-lg transition-all duration-300"
-          />
-          {!isLogin && (
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={confirmPass}
-              onChange={(e) => setConfirmPass(e.target.value)}
-              className="w-full p-3 mb-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:shadow-lg transition-all duration-300"
-            />
+
+          {forgot ? (
+            <>
+              <input
+                type="email"
+                placeholder="Email"
+                className="w-full p-3 mb-3 rounded-lg bg-white/30 border border-white/40 
+                           text-black placeholder-black outline-none cursor-pointer"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^\S+@\S+$/i,
+                    message: "Invalid email format",
+                  },
+                })}
+              />
+              <p className="text-red-400 text-sm">{errors.email?.message}</p>
+
+              <input
+                type="password"
+                placeholder="New Password"
+                className="w-full p-3 mb-3 rounded-lg bg-white/30 border border-white/40 
+                           text-black placeholder-black outline-none cursor-pointer"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 4,
+                    message: "Minimum 4 characters",
+                  },
+                  maxLength: {
+                    value: 10,
+                    message: "Maximum 10 characters",
+                  },
+                })}
+              />
+              <p className="text-red-400 text-sm">{errors.password?.message}</p>
+
+              <div className="flex flex-col gap-3 mt-6">
+                <button 
+                  type="submit" 
+                  className="w-full bg-blue-500 hover:bg-blue-600 
+                             text-white py-3 rounded-lg transition duration-300 cursor-pointer">
+                  Reset Password
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setForgot(false)}
+                  className="w-full border border-white/40 text-white py-3 rounded-lg cursor-pointer">
+                  Back to Login
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <input
+                type="email"
+                placeholder="Email"
+                className="w-full p-3 mb-3 rounded-lg bg-white/30 border border-white/40 
+                           text-black placeholder-black outline-none cursor-pointer"
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: {
+                    value: /^\S+@\S+$/i,
+                    message: "Invalid email format",
+                  },
+                })}
+              />
+              <p className="text-red-400 text-sm">{errors.email?.message}</p>
+
+              <input
+                type="password"
+                placeholder="Password"
+                className="w-full p-3 mb-3 rounded-lg bg-white/30 border border-white/40 
+                           text-black placeholder-black outline-none cursor-pointer"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: {
+                    value: 4,
+                    message: "Minimum 4 characters",
+                  },
+                  maxLength: {
+                    value: 10,
+                    message: "Maximum 10 characters",
+                  },
+                })}
+              />
+              <p className="text-red-400 text-sm">{errors.password?.message}</p>
+
+              <div className="flex justify-between text-sm text-white mt-2">
+                <span 
+                  className="cursor-pointer underline"
+                  onClick={() => setForgot(true)}
+                >
+                  Forgot password ?
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-3 mt-6">
+                <button 
+                  type="submit" 
+                  className="w-full bg-blue-500 hover:bg-blue-600 cursor-pointer
+                             text-white py-3 rounded-lg transition duration-300">
+                  Login
+                </button>
+              </div>
+            </>
           )}
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-linear-to-r from-indigo-500 to-purple-400 text-white rounded-xl font-semibold hover:scale-105 hover:opacity-90 transition-all duration-300"
+          <button 
+            type="button"
+            onClick={() => navigate("/")} 
+            className="mt-4 block mx-auto text-black cursor-pointer"
           >
-            {isLogin ? "Login" : "Sign Up"}
+             ← Back
           </button>
-        </form>
-        {message && (
-          <p
-            className={`text-center mt-4 text-sm font-medium ${
-              message.includes("successful") ? "text-green-500" : "text-red-500"
-            } transition-colors duration-300`}
-          >
-            {message}
-          </p>
-        )}
-        <p className="text-center mt-6 text-gray-600 text-sm">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-          <span
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setMessage("");
-            }}
-            className="text-purple-600 font-semibold cursor-pointer hover:underline ml-1 transition-all duration-300">
-            {isLogin ? "Sign Up" : "Login"}
-          </span>
-        </p>
-      </div>
+
+        </div>
+      </form>
     </div>
-  );
+  )
 }
+
 export default WebLogDoctor;

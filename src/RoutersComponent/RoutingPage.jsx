@@ -4,7 +4,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage3 from "../HomePageComponent/HomePage3";
 import HomePage2 from "../HomePageComponent/HomePage2";
 import HomePage1 from "../HomePageComponent/HomePage1";
+import AboutUs from "../HomePageComponent/AboutUs";
 import CombinedHome from "../HomePageComponent/CombinedHome";
+
 
 import WebLogPatient from "../LoginComponent/WebLogPatient";
 import WebLogDoctor from "../LoginComponent/WebLogDoctor";
@@ -34,6 +36,8 @@ import DoctorDashboard, {
   Appointments,
 } from "../DoctorDashboardComponent/DoctorDashboard";
 
+
+
 function RoutingPage() {
   const [appointments, setAppointments] = useState(() => {
     return JSON.parse(localStorage.getItem("appointments")) || [];
@@ -53,8 +57,8 @@ function RoutingPage() {
   return (
     <div>
       <Routes>
-        <Route path="/aboutus" element={<HomePage3 />} />
-        <Route path="/about-us" element={<HomePage3 />} />
+        <Route path="/aboutus" element={<AboutUs/>} />
+        <Route path="/aboutus" element={<AboutUs />} />
         <Route path="/login" element={<HomePage2 />} />
         <Route path="/register" element={<HomePage2 />} />
         <Route path="/contact" element={<HomePage3 />} />
