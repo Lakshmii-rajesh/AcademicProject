@@ -1,27 +1,23 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { NavLink, Link, Outlet } from "react-router-dom";
+import axios from "axios";
 import {
   FaBars,
   FaUsers,
   FaUserMd,
-  FaUserInjured,
   FaClipboardList,
-  FaSearch,
   FaFileAlt,
   FaHome,
   FaUserCog,
-  FaChevronDown,
 } from "react-icons/fa";
 import { VscTerminal } from "react-icons/vsc";
 import { HiUserGroup } from "react-icons/hi2";
 import { IoPerson } from "react-icons/io5";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { ImCross } from "react-icons/im";
-import { Outlet } from "react-router-dom";
-// import Doctors from "./AddDoctor";
-import { Routes, Route, NavLink, Link } from "react-router-dom";
-import AddDoctor from "./AddDoctor";
+import AddDoctor from "./AddDoctor"; // placeholder component for AddDoctor
 
-export default function AdminDashboard() {
+export default function AdminDashBoard() {
   const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -32,7 +28,6 @@ export default function AdminDashboard() {
         setOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -46,7 +41,6 @@ export default function AdminDashboard() {
             <FaBars />
           </button>
         )}
-
         <div className="relative" ref={dropdownRef}>
           <div
             className="flex items-center gap-2 cursor-pointer"
@@ -70,7 +64,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/*  Sidebar */}
+      {/* Sidebar */}
       <div
         className={
           "fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-40 " +
@@ -87,23 +81,25 @@ export default function AdminDashboard() {
         <nav className="space-y-1 mt-2">
           <SidebarItem to="." icon={<FaHome />} label="Dashboard" />
           <SidebarItem to="users" icon={<FaUsers />} label="Manage Users" />
-          <SidebarItem to="doctors" icon={<FaUserMd />} label=" AddDoctors" />
-          <SidebarItem to="appointments" icon={<FaClipboardList />} label="Appointments" />
+          <SidebarItem to="doctors" icon={<FaUserMd />} label="Add Doctors" />
+          <SidebarItem
+            to="appointments"
+            icon={<FaClipboardList />}
+            label="Appointments"
+          />
+          <SidebarItem to="queries" icon={<FaFileAlt />} label="New Queries" />
         </nav>
       </div>
 
       {/* Main Content */}
-      <div
-        className={"p-6 transition-all duration-300 " + (isOpen ? "ml-64" : "")}
-      >
+      <div className={"p-6 transition-all duration-300 " + (isOpen ? "ml-64" : "")}>
         <Outlet />
       </div>
     </div>
   );
 }
 
-
-//  Sidebar Item 
+// Sidebar Item Component
 function SidebarItem({ to, icon, label }) {
   return (
     <NavLink
@@ -120,75 +116,70 @@ function SidebarItem({ to, icon, label }) {
   );
 }
 
-//  Dashboard
+// ================= Admin Dashboard Cards =================
 export function ADashboard() {
-  let array = [
-    {
-      icon: <FaUserCog size={50} color="blue" />,
-      headline: "Manage Users",
-      link: "/admin-dashboard/users",
-    },
-    {
-      icon: <HiUserGroup size={50} color="blue" />,
-      headline: "Manage Doctors",
-      link: "/admin-dashboard/doctors",
-    },
-    {
-      icon: <VscTerminal size={50} color="blue" />,
-      headline: "Appointments",
-      link: "/admin-dashboard/appointments",
-    },
-    {
-      icon: <FaFileAlt size={50} color="blue" />,
-      headline: "New Queries",
-      link: "/admin-dashboard/queries",
-    },
+  const cards = [
+    { icon: <FaUserCog size={50} color="blue" />, headline: "Manage Users", link: "users" },
+    { icon: <HiUserGroup size={50} color="blue" />, headline: "Manage Doctors", link: "doctors" },
+    { icon: <VscTerminal size={50} color="blue" />, headline: "Appointments", link: "appointments" },
+    { icon: <FaFileAlt size={50} color="blue" />, headline: "New Queries", link: "queries" },
   ];
 
   return (
     <>
       <h1 className="text-4xl font-bold mb-6">Admin Dashboard</h1>
-
-      <div className="grid grid-cols-2 grid-rows-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-pointer">
-        {array.map((e, index) => (
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-pointer">
+        {cards.map((card, index) => (
           <Link
             key={index}
-            to={e.link}
+            to={card.link}
             className="rounded-lg bg-blue-200 p-6 flex flex-col items-center justify-center shadow hover:shadow-lg transition text-xl font-medium mt-4"
           >
-            {e.icon}
-            {e.headline}
+            {card.icon}
+            {card.headline}
           </Link>
         ))}
       </div>
-
-      
     </>
   );
 }
 
-//  Users
+// ================= Manage Users =================
 export function ManageUsers() {
-  const [isOpen] = useState(false);
-  const users = [
-    {
-      name: "Megha",
-      email: "megha@gmail.com",
-      mobile: "9483773017",
-    },
-  ];
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+
+  const API = "https://localhost:7077/api/Regester/GetPatients";
+
+  useEffect(() => {
+    axios
+      .get(API)
+      .then((res) => setUsers(res.data))
+      .catch((err) => console.error("Error fetching users:", err));
+  }, []);
+
+  const filteredUsers = users
+    .map((u, index) => ({
+      Id: u.id ?? index,
+      Name: u.name ?? "-",
+      Email: u.email ?? "-",
+      Phone: u.phone ?? "-",
+    }))
+    .filter((user) =>
+      user.Name.toLowerCase().includes(search.toLowerCase()) ||
+      user.Email.toLowerCase().includes(search.toLowerCase())
+    );
+
   return (
-    <>
-    <div className={"p-6 transition-all duration-300 " + (isOpen ? "ml-64" : "ml-0")}>
-      <h2 className="text-2xl font-bold mb-4">Patient Search</h2>
-      <input
-        type="text"
-        placeholder="Search..."
-        className="p-2 border rounded w-full max-w-md"
-      />
-    </div>
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Users List</h2>
+      <input
+        type="text"
+        placeholder="Search by name or email..."
+        className="p-2 border rounded w-full max-w-md mb-4"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300">
@@ -199,128 +190,136 @@ export function ManageUsers() {
               <th className="px-4 py-2 border">Mobile Number</th>
             </tr>
           </thead>
-
           <tbody>
-            {users.map((user, index) => (
-              <tr key={index} className="text-center hover:bg-gray-100">
-                <td className="px-4 py-2 border">{user.name}</td>
-                <td className="px-4 py-2 border">{user.email}</td>
-                <td className="px-4 py-2 border">{user.mobile}</td>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <tr key={user.Id} className="text-center hover:bg-gray-100">
+                  <td className="px-4 py-2 border">{user.Name}</td>
+                  <td className="px-4 py-2 border">{user.Email}</td>
+                  <td className="px-4 py-2 border">{user.Phone}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="3" className="text-center py-4">
+                  No Users Found
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
     </div>
-    </>
   );
-  
 }
 
-//  Doctors
+// ================= Manage Doctors =================
 export function ManageDoctors() {
   return (
     <div className="p-6">
-      <AddDoctor/>
+      <h2 className="text-2xl font-bold mb-4">Doctors</h2>
+      <AddDoctor />
     </div>
   );
 }
-//  Appointment History
 
+// ================= Appointments =================
 export function AppointmentHistory() {
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Appointments</h2>
+      {/* Future Table or UI for appointments */}
+    </div>
+  );
+}
 
-  const appointments = [
-    {
-      id: 1,
-      patient: "Rahul Kumar",
-      doctor: "Dr. Meena",
-      department: "Cardiology",
-      date: "25 Feb 2026",
-      time: "10:30 AM",
-      status: "Completed"
-    },
-    {
-      id: 2,
-      patient: "Anjali Sharma",
-      doctor: "Dr. Ramesh",
-      department: "Dermatology",
-      date: "26 Feb 2026",
-      time: "12:00 PM",
-      status: "Cancelled"
-    },
-    {
-      id: 3,
-      patient: "Kiran Gowda",
-      doctor: "Dr. Priya",
-      department: "Orthopedic",
-      date: "27 Feb 2026",
-      time: "03:15 PM",
-      status: "Pending"
+// ================= New Queries =================
+export function NewQueries() {
+  const [queries, setQueries] = useState([]);
+  const [error, setError] = useState("");
+
+  const fetchQueries = async () => {
+    try {
+      const res = await axios.get(
+        "https://localhost:7077/api/ContactMessage/getmessages"
+      );
+      setQueries(res.data);
+    } catch (err) {
+      console.error("Error fetching queries:", err);
+      setError("Failed to load queries. Please try again later.");
     }
-  ];
+  };
 
-  const statusColor = (status) => {
-    if (status === "Completed")
-      return "bg-green-100 text-green-700";
-    if (status === "Cancelled")
-      return "bg-red-100 text-red-700";
-    return "bg-yellow-100 text-yellow-700";
+  useEffect(() => {
+    fetchQueries();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!id) {
+      alert("Invalid Id, cannot delete");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this query?")) return;
+
+    try {
+      await axios.delete(
+        `https://localhost:7077/api/ContactMessage/delete/${id}`
+      );
+      setQueries((prev) => prev.filter((q) => q.id !== id));
+      alert("Query deleted successfully!");
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert(
+        err.response?.data?.message || "Failed to delete query. Please try again."
+      );
+    }
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6">
+      <h2 className="text-3xl font-bold mb-6 text-blue-600">🩺 New Queries</h2>
 
-      <h1 className="text-3xl font-semibold mb-6">
-        Appointment History
-      </h1>
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">
+          {error}
+        </div>
+      )}
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {appointments.map((item) => (
-          <div
-            key={item.id}
-            className="bg-white rounded-xl shadow-md p-5 hover:shadow-xl transition"
-          >
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-lg font-semibold">
-                {item.patient}
-              </h2>
+      {queries.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {queries.map((q) => (
+            <div
+              key={q.id}
+              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition duration-300"
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-xl font-semibold text-gray-800">{q.name}</h3>
+                <span className="text-gray-400 text-sm">
+                  {new Date(q.createdAt).toLocaleString()}
+                </span>
+              </div>
 
-              <span
-                className={`px-3 py-1 text-sm rounded-full ${statusColor(
-                  item.status
-                )}`}
+              <p className="text-gray-600 mb-1">
+                <span className="font-medium">Email:</span> {q.email}
+              </p>
+              <p className="text-gray-600 mb-1">
+                <span className="font-medium">Mobile:</span> {q.mobileNumber}
+              </p>
+              <p className="text-gray-700 mt-2">{q.message}</p>
+
+              <button
+                className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                onClick={() => handleDelete(q.id)}
               >
-                {item.status}
-              </span>
+                Delete
+              </button>
             </div>
-
-            <p className="text-gray-600">
-              Doctor : <span className="font-medium">{item.doctor}</span>
-            </p>
-
-            <p className="text-gray-600">
-              Department :{" "}
-              <span className="font-medium">
-                {item.department}
-              </span>
-            </p>
-
-            <div className="flex justify-between mt-4 text-sm text-gray-500">
-              <span>Date : {item.date}</span>
-              <span>Time : {item.time}</span>
-            </div>
-
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500">No queries found.</p>
+      )}
     </div>
   );
-}
-
-
-
-
-// Queries
-export function NewQueries() {
-  return <h2 className="text-2xl font-bold">New Queries</h2>;
 }
