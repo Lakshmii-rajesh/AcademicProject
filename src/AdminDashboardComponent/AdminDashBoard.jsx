@@ -225,8 +225,6 @@ export function ManageDoctors() {
     </div>
   );
 }
-
-
 //  Appointment History
 
 export function AppointmentHistory() {

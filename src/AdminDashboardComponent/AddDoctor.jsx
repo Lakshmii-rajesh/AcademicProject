@@ -1,285 +1,272 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function AddDoctor() {
+
+  const API = "https://localhost:7077/api/AddDoctors";
 
   const [view, setView] = useState("manage");
   const [doctors, setDoctors] = useState([]);
   const [preview, setPreview] = useState(null);
-  const [editIndex, setEditIndex] = useState(null);
 
   const [form, setForm] = useState({
-    name: "",
-    specialization: "",
-    fees: "",
-    contact: "",
-    email: "",
-    password: "",
-    image: ""
+    DoctorName: "",
+    Specialization: "",
+    Fee: "",
+    Contact: "",
+    Email: "",
+    Password: "",
+    Image: null
   });
 
+  // ✅ FETCH DOCTORS
+const fetchDoctors = async () => {
+  try {
+    const res = await axios.get(API);
+    console.log("GET DATA:", res.data); // ✅ check data
+    setDoctors(res.data);
+  } catch (err) {
+    console.error("GET ERROR:", err);
+  }
+};
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  // ✅ HANDLE INPUT
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // ✅ HANDLE IMAGE
   const handleImage = (e) => {
     const file = e.target.files[0];
+
     if (file) {
-      setForm({ ...form, image: file });
+      setForm({ ...form, Image: file });
       setPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSubmit = (e) => {
+  // ✅ ADD DOCTOR
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (editIndex !== null) {
-      const updated = [...doctors];
-      updated[editIndex] = { ...form, preview };
-      setDoctors(updated);
-      setEditIndex(null);
-    } else {
-      setDoctors([...doctors, { ...form, preview }]);
+    try {
+      const formData = new FormData();
+
+      formData.append("DoctorName", form.DoctorName);
+      formData.append("Specialization", form.Specialization);
+      formData.append("Fee", form.Fee);
+      formData.append("Contact", form.Contact);
+      formData.append("Email", form.Email);
+      formData.append("Password", form.Password);
+      formData.append("Image", form.Image);
+
+      await axios.post(`${API}/add`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      alert("Doctor Added Successfully ✅");
+
+      // reset form
+      setForm({
+        DoctorName: "",
+        Specialization: "",
+        Fee: "",
+        Contact: "",
+        Email: "",
+        Password: "",
+        Image: null
+      });
+
+      setPreview(null);
+      setView("manage");
+      fetchDoctors();
+
     }
+catch (err) {
+  console.error(err);
 
-    setForm({
-      name: "",
-      specialization: "",
-      fees: "",
-      contact: "",
-      email: "",
-      password: "",
-      image: ""
-    });
-
-    setPreview(null);
-    setView("manage");
+  alert(err.response?.data?.message || "Server error ❌");
+}
   };
 
-  const handleEdit = (index) => {
-    const doc = doctors[index];
-    setForm(doc);
-    setPreview(doc.preview);
-    setEditIndex(index);
-    setView("add");
-  };
-
-  const handleDelete = (index) => {
-    const updated = doctors.filter((_, i) => i !== index);
-    setDoctors(updated);
+  // ✅ DELETE DOCTOR
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API}/${id}`);
+      fetchDoctors();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
-
     <div className="p-8 bg-gray-100 min-h-screen">
 
       <h1 className="text-2xl font-bold mb-6">Doctor Management</h1>
 
-      {/* Buttons */}
+      {/* BUTTONS */}
       <div className="flex gap-4 mb-6">
         <button
           onClick={() => setView("add")}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
           Add Doctor
         </button>
 
         <button
           onClick={() => setView("manage")}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          className="bg-green-600 text-white px-4 py-2 rounded"
         >
           Manage Doctors
         </button>
       </div>
 
-      {/* ADD DOCTOR FORM */}
+      {/* ADD FORM */}
       {view === "add" && (
-
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-lg shadow flex flex-col  md:grid-cols-2 gap-4"
+          className="bg-white p-6 rounded-lg shadow flex flex-col gap-4"
         >
 
           <input
-            type="text"
-            name="name"
+            name="DoctorName"
             placeholder="Doctor Name"
-            value={form.name}
+            value={form.DoctorName}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2"
             required
           />
 
           <input
-            type="text"
-            name="specialization"
+            name="Specialization"
             placeholder="Specialization"
-            value={form.specialization}
+            value={form.Specialization}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2"
             required
           />
 
           <input
+            name="Fee"
             type="number"
-            name="fees"
-            placeholder="Consultation Fees"
-            value={form.fees}
+            placeholder="Fees"
+            value={form.Fee}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2"
             required
           />
 
           <input
-            type="text"
-            name="contact"
-            placeholder="Contact Number"
-            value={form.contact}
+            name="Contact"
+            placeholder="Contact"
+            value={form.Contact}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2"
             required
           />
 
           <input
+            name="Email"
             type="email"
-            name="email"
             placeholder="Email"
-            value={form.email}
+            value={form.Email}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2"
             required
           />
 
           <input
+            name="Password"
             type="password"
-            name="password"
             placeholder="Password"
-            value={form.password}
+            value={form.Password}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2"
             required
           />
 
-          {/* Image Upload */}
-          <div className="col-span-2 flex items-center gap-4">
+          {/* IMAGE */}
+          <input type="file" accept="image/*" onChange={handleImage} required />
 
-            {preview && (
-              <img
-                src={preview}
-                alt="preview"
-                className="w-20 h-20 rounded-full object-cover"
-              />
-            )}
+          {preview && (
+            <img
+              src={preview}
+              alt="preview"
+              className="w-20 h-20 rounded-full"
+            />
+          )}
 
-            <label className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-              Choose Image
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImage}
-              />
-            </label>
-
-          </div>
-
-          {/* Submit Button */}
-          <button
-            className=" bg-blue-600 text-white py-2 rounded"
-          >
-            {editIndex !== null ? "Update Doctor" : "Add Doctor"}
+          <button className="bg-blue-600 text-white py-2 rounded">
+            Add Doctor
           </button>
 
         </form>
       )}
 
-      {/* MANAGE DOCTORS */}
+      {/* DOCTORS TABLE */}
       {view === "manage" && (
-
         <div className="bg-white p-6 rounded-lg shadow">
 
-          <h2 className="text-xl font-semibold mb-4">Doctors List</h2>
+          <table className="w-full border">
+            <thead className="bg-gray-200">
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Specialization</th>
+                <th>Fees</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Action</th>
+              </tr>
+            </thead>
 
-          <div className="overflow-x-auto">
-
-            <table className="w-full border">
-
-              <thead className="bg-gray-200">
+            <tbody>
+              {doctors.length === 0 ? (
                 <tr>
-                  <th className="p-2">Image</th>
-                  <th className="p-2">Name</th>
-                  <th className="p-2">Specialization</th>
-                  <th className="p-2">Fees</th>
-                  <th className="p-2">Contact</th>
-                  <th className="p-2">Email</th>
-                  <th className="p-2">Actions</th>
+                  <td colSpan="7" className="text-center p-4">
+                    No Doctors
+                  </td>
                 </tr>
-              </thead>
+              ) : (
+                doctors.map((doc) => (
+                  <tr key={doc.Id} className="text-center border-t">
 
-              <tbody>
-
-                {doctors.length === 0 ? (
-
-                  <tr>
-                    <td colSpan="7" className="text-center p-4">
-                      No Doctors Added
+                    <td>
+                      <img
+                        src={`https://localhost:7077/DoctorPhotos/${doc.Image}`}
+                        alt="doctor"
+                        className="w-12 h-12 rounded-full mx-auto"
+                      />
                     </td>
+
+                    <td>{doc.DoctorName}</td>
+                    <td>{doc.Specialization}</td>
+                    <td>₹{doc.Fee}</td>
+                    <td>{doc.Contact}</td>
+                    <td>{doc.Email}</td>
+
+                    <td>
+                      <button
+                        onClick={() => handleDelete(doc.Id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded"
+                      >
+                        Delete
+                      </button>
+                    </td>
+
                   </tr>
+                ))
+              )}
+            </tbody>
 
-                ) : (
-
-                  doctors.map((doc, index) => (
-
-                    <tr key={index} className="text-center border-t">
-
-                      <td className="p-2">
-                        {doc.preview && (
-                          <img
-                            src={doc.preview}
-                            alt="doctor"
-                            className="w-12 h-12 rounded-full object-cover mx-auto"
-                          />
-                        )}
-                      </td>
-
-                      <td>{doc.name}</td>
-                      <td>{doc.specialization}</td>
-                      <td>₹{doc.fees}</td>
-                      <td>{doc.contact}</td>
-                      <td>{doc.email}</td>
-
-                      <td className="space-x-2">
-
-                        <button
-                          onClick={() => handleEdit(index)}
-                          className="bg-yellow-500 text-white px-3 py-1 rounded"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => handleDelete(index)}
-                          className="bg-red-600 text-white px-3 py-1 rounded"
-                        >
-                          Delete
-                        </button>
-
-                      </td>
-
-                    </tr>
-
-                  ))
-
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
+          </table>
 
         </div>
       )}
-
     </div>
   );
 }
