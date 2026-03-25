@@ -18,7 +18,7 @@ function WebLogPatient() {
       } else {
         // Login
         const res = await loginPatient({ email: data.email, password: data.password });
-        alert(res);
+        alert(res.message);
         navigate("/patient-dashboard");
       }
     } catch (err) {

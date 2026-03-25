@@ -123,7 +123,7 @@ export function ADashboard() {
     { icon: <HiUserGroup size={50} color="blue" />, headline: "Manage Doctors", link: "doctors" },
     { icon: <VscTerminal size={50} color="blue" />, headline: "Appointments", link: "appointments" },
     { icon: <FaFileAlt size={50} color="blue" />, headline: "New Queries", link: "queries" },
-  ];
+  ]; 
 
   return (
     <>

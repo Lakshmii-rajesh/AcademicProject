@@ -1,29 +1,24 @@
-import { useNavigate, NavLink, Outlet } from "react-router-dom";
+import { useNavigate, NavLink, Outlet, Link } from "react-router-dom";
 import { IoPerson } from "react-icons/io5";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { ImCross } from "react-icons/im";
 import { MdEmail, MdLocationCity, MdPhone } from "react-icons/md";
-import { FaUser } from "react-icons/fa";
+import { FaUser, FaHeartbeat, FaNotesMedical } from "react-icons/fa";
 import axios from "axios";
 import PropTypes from "prop-types";
-import { FaHeartbeat, FaTint } from "react-icons/fa";
 import React, { useState, useRef, useEffect } from "react";
-import {
-  FaBars,
-  FaHome,
-  FaCalendarAlt,
-  FaFileAlt,
-  FaNotesMedical
-} from "react-icons/fa";
-const BASE_URL = "https://localhost:7077/api/BookAppointment";
-// Main Patient Dashboard Component
-export default function PatientDashboard() {
-  const [isOpen, setIsOpen] = useState(false); // controls sidebar open/close
-  const [open, setOpen] = useState(false); // controls profile dropdown
+import { FaBars, FaHome, FaCalendarAlt, FaFileAlt } from "react-icons/fa";
+import { User, Stethoscope, Phone, Mail, MapPin } from "lucide-react";
+import { FaSquarePersonConfined } from "react-icons/fa6";
 
+const BASE_URL = "https://localhost:7077/api/BookAppointment";
+
+/* ===================== MAIN LAYOUT ===================== */
+export default function PatientDashboard() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown if click happens outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -36,32 +31,28 @@ export default function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-
       {/* NAVBAR */}
-      <div className="bg-blue-300 flex justify-between items-center px-6 py-4 relative text-black">
-        {/* Hamburger button to open sidebar */}
+      <div className="bg-blue-300 flex justify-between items-center px-6 py-4">
         {!isOpen && (
-          <button className="text-3xl text-black" onClick={() => setIsOpen(true)}>
-            <FaBars />
+          <button onClick={() => setIsOpen(true)}>
+            <FaBars size={25} />
           </button>
         )}
 
-        {/* Profile dropdown */}
-        <div className="relative" ref={dropdownRef}>
+        <div ref={dropdownRef}>
           <div
-            className="flex items-center gap-2 cursor-pointer text-black"
+            className="flex items-center gap-2 cursor-pointer"
             onClick={() => setOpen(!open)}
           >
-            <IoPerson size={35} />
-            <p className="text-lg font-semibold">Patient</p>
-            <RiArrowDropDownLine size={35} />
+            <IoPerson size={30} />
+            <p className="font-semibold">Patient</p>
+            <RiArrowDropDownLine size={30} />
           </div>
 
-          {/* Dropdown content */}
           {open && (
-            <div className="absolute right-0 mt-2 w-24 bg-white border rounded">
+            <div className="absolute right-6 mt-2 bg-white border rounded">
               <button
-                className="w-full text-left px-4 py-2 hover:bg-blue-300"
+                className="px-4 py-2 hover:bg-blue-200"
                 onClick={() => (window.location.href = "/login")}
               >
                 Logout
@@ -73,44 +64,46 @@ export default function PatientDashboard() {
 
       {/* SIDEBAR */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white transform transition-transform duration-300 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white transition-transform ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        {/* Sidebar header */}
-        <div className="flex justify-between items-center m-4 px-4 py-4 border-b">
-          <p className="text-xl font-bold">CUREONIX</p>
+        <div className="flex justify-between items-center m-4 border-b pb-3">
+          <h2 className="font-bold">CUREONIX</h2>
           <button onClick={() => setIsOpen(false)}>
             <ImCross />
           </button>
         </div>
 
-        {/* Sidebar navigation links */}
-        <nav className="space-y-1 mt-2">
+        <nav>
           <SidebarItem to="." icon={<FaHome />} label="Dashboard" />
-          <SidebarItem to="book" icon={<FaCalendarAlt />} label="Book Appointment" />
-          <SidebarItem to="history" icon={<FaFileAlt />} label="Appointment History" />
-          <SidebarItem to="medical" icon={<FaNotesMedical />} label="Medical History" />
-          <SidebarItem to="profile" icon={<IoPerson />} label="My Profile" />
+          <SidebarItem
+            to="book"
+            icon={<FaCalendarAlt />}
+            label="Book Appointment"
+          />
+          <SidebarItem to="history" icon={<FaFileAlt />} label="History" />
+          <SidebarItem to="profile" icon={<IoPerson />} label="Profile" />
         </nav>
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className={`p-6 transition-all duration-300 ${isOpen ? "ml-64" : ""}`}>
-        <Outlet /> {/* Nested routes will render here */}
+      {/* CONTENT */}
+      <div className={`p-6 ${isOpen ? "ml-64" : ""}`}>
+        <Outlet />
       </div>
-
     </div>
   );
 }
 
-// Sidebar item component
+/* ===================== SIDEBAR ITEM ===================== */
 function SidebarItem({ to, icon, label }) {
   return (
     <NavLink
       to={to}
-      end={to === "."} // set active only for current path
+      end={to === "."}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-6 py-3 hover:bg-blue-200 ${isActive ? "bg-blue-300 font-semibold" : ""
+        `flex items-center gap-3 px-6 py-3 ${
+          isActive ? "bg-blue-300 font-semibold" : "hover:bg-blue-200"
         }`
       }
     >
@@ -120,60 +113,10 @@ function SidebarItem({ to, icon, label }) {
   );
 }
 
-// Dashboard content
-export function PDashboard() {
-  const navigate = useNavigate();
-
-  return (
-    <>
-      <h1 className="text-4xl font-bold my-6">Patient Dashboard</h1>
-
-      {/* Quick welcome card */}
-      <div className="bg-blue-300 p-5 rounded-lg mb-6 text-black">
-        <h2 className="text-2xl font-semibold">Welcome Back</h2>
-        <p>Here is your health summary</p>
-      </div>
-
-      {/* Stats cards */}
-      <div className="grid md:grid-cols-4 gap-6 mb-6">
-        <StatCard title="Assigned Doctor" value="Dr. Smith" />
-        <StatCard title="Next Appointment" value="12 Oct 2026" />
-        <StatCard title="Prescriptions" value="3 Active" />
-        <StatCard title="Lab Reports" value="2 New" />
-      </div>
-
-      {/* Vitals */}
-      <div className="bg-white p-6 rounded-lg mb-6">
-        <h3 className="text-xl font-semibold mb-3">Vitals</h3>
-        <div className="grid md:grid-cols-4 gap-4">
-          <p>BP: 120/80</p>
-          <p>Sugar: 95 mg/dL</p>
-          <p>Weight: 68 kg</p>
-          <p>Height: 170 cm</p>
-        </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex gap-4">
-        <button
-          onClick={() => navigate("book")}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Book Appointment
-        </button>
-
-        <button className="bg-green-500 text-white px-4 py-2 rounded">
-          View Reports
-        </button>
-      </div>
-    </>
-  );
-}
-
-// Small card for showing stats
+/* ===================== DASHBOARD ===================== */
 function StatCard({ title, value }) {
   return (
-    <div className="bg-white p-4 rounded-lg">
+    <div className="bg-white p-4 rounded-lg shadow">
       <h4 className="text-gray-500">{title}</h4>
       <p className="text-xl font-bold">{value}</p>
     </div>
@@ -181,9 +124,194 @@ function StatCard({ title, value }) {
 }
 
 
+export function PDashboard() {
+  const navigate = useNavigate();
+  const [patientInfo, setPatientInfo] = useState({
+    name: "N/A",
+    email: "N/A",
+    phone: "N/A",
+    city: "N/A",
+    image: "" // placeholder
+  });
+
+  useEffect(() => {
+    const fetchPatient = async () => {
+      const patientId = localStorage.getItem("patientId");
+      if (!patientId) return; // No ID saved
+
+      try {
+        const res = await axios.get(
+          `https://localhost:7077/api/Regester/PatientById/${patientId}`
+        );
+
+        const data = res.data;
+
+        // Map backend fields correctly
+        setPatientInfo({
+          name: data.Name || "N/A",
+          email: data.Email || "N/A",
+          phone: data.Phone || "N/A",
+          city: "N/A", // optional: add city if backend has it
+          image: "" // optional: add image if backend has it
+        });
+      } catch (err) {
+        console.error("Error fetching patient info:", err);
+      }
+    };
+
+    fetchPatient();
+  }, []);
+
+  return (
+    <>
+      <h1 className="text-4xl font-bold my-6">Patient Dashboard</h1>
+
+      {/* Welcome */}
+      <div className="bg-blue-300 p-5 rounded-lg mb-6">
+        <h2 className="text-2xl font-semibold">Welcome Back</h2>
+        <p>Here is your health summary</p>
+      </div>
+
+      {/* Patient Details */}
+      <div className="bg-white p-6 rounded-lg mb-6">
+        <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
+          Patient Details
+        </h3>
+
+        <div className="grid md:grid-cols-4 gap-5">
+          {/* Image */}
+          <div className="flex flex-col items-center space-y-2">
+            {patientInfo.image ? (
+              <img
+                src={patientInfo.image}
+                alt="patient"
+                className="w-24 h-24 rounded-full object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center border border-gray-200">
+                <FaUser className="text-slate-500 text-2xl" />
+              </div>
+            )}
+          </div>
+
+          {/* Name */}
+          <div className="flex items-center gap-3">
+            <FaUser className="text-gray-500" />
+            <div>
+              <p className="text-gray-500 text-sm">Patient Name</p>
+              <p className="font-semibold text-lg">{patientInfo.name}</p>
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="flex items-center gap-3">
+            <MdEmail className="text-gray-500" />
+            <div>
+              <p className="text-gray-500 text-sm">Email</p>
+              <p className="font-semibold text-lg">{patientInfo.email}</p>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="flex items-center gap-3">
+            <MdPhone className="text-gray-500" />
+            <div>
+              <p className="text-gray-500 text-sm">Contact</p>
+              <p className="font-semibold text-lg">{patientInfo.phone}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+{/* Static Information Section */}
+      <div className="bg-white p-6 rounded-lg mt-6">
+        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <FaHeartbeat className="text-red-500" />
+          Health Tips & Reminders
+        </h3>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="font-medium text-gray-800">Stay Hydrated</p>
+                <p className="text-sm text-gray-600">Drink at least 8 glasses of water daily to maintain good health.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="font-medium text-gray-800">Regular Check-ups</p>
+                <p className="text-sm text-gray-600">Schedule annual health check-ups to detect issues early.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="font-medium text-gray-800">Healthy Diet</p>
+                <p className="text-sm text-gray-600">Include fruits, vegetables, and whole grains in your daily meals.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="font-medium text-gray-800">Exercise Regularly</p>
+                <p className="text-sm text-gray-600">Aim for at least 30 minutes of moderate exercise daily.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="font-medium text-gray-800">Emergency Contact</p>
+                <p className="text-sm text-gray-600">Keep emergency numbers handy: Ambulance - 108, Police - 100</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 bg-teal-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <p className="font-medium text-gray-800">Mental Health</p>
+                <p className="text-sm text-gray-600">Take time for relaxation and maintain work-life balance.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <p className="text-sm text-blue-800">
+            <strong>Remember:</strong> Your health is your wealth. Regular monitoring and healthy lifestyle choices lead to a better quality of life.
+          </p>
+        </div>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-4 my-5">
+        <button
+          onClick={() => navigate("book")}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Book Appointment
+        </button>
+
+        <Link
+          to="profile"
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
+          View Profile
+        </Link>
+      </div>
+    </>
+  );
+}
+
 // BOOK APPOINTMENT COMPONENT
 export function BookAppointment() {
-
   // Form states
   const [appointments, setAppointments] = useState([]);
 
@@ -196,48 +324,54 @@ export function BookAppointment() {
   const [city, setCity] = useState("");
 
   // Handle booking logic
-const handleBook = async () => {
-  if (!patientName || !contact || !doctor || !treatment || !date || !time || !city) {
-    alert("Please fill all fields");
-    return;
-  }
+  const handleBook = async () => {
+    if (
+      !patientName ||
+      !contact ||
+      !doctor ||
+      !treatment ||
+      !date ||
+      !time ||
+      !city
+    ) {
+      alert("Please fill all fields");
+      return;
+    }
 
-  const newAppointment = {
-    patientName,
-    contactNumber: contact, // Matches backend model
-    doctorName: doctor,
-    reason: treatment,
-    appointmentDate: date,
-    timeSlot: time,
-    city
+    const newAppointment = {
+      patientName,
+      contactNumber: contact, // Matches backend model
+      doctorName: doctor,
+      reason: treatment,
+      appointmentDate: date,
+      timeSlot: time,
+      city,
+    };
+
+    try {
+      // FIX: Send 'newAppointment' and use the correct sub-route
+      const response = await axios.post(
+        `${BASE_URL}/BookAppointment`,
+        newAppointment,
+      );
+
+      alert("Appointment booked successfully");
+      setAppointments([...appointments, response.data]);
+      // ... rest of your reset logic
+    } catch (error) {
+      console.error(error);
+      alert("Error saving appointment");
+    }
   };
-
-  try {
-    // FIX: Send 'newAppointment' and use the correct sub-route
-    const response = await axios.post(`${BASE_URL}/BookAppointment`, newAppointment);
-
-    alert("Appointment booked successfully");
-    setAppointments([...appointments, response.data]);
-    // ... rest of your reset logic
-  } catch (error) {
-    console.error(error);
-    alert("Error saving appointment");
-  }
-};
   return (
     <div
       className="min-h-screen w-full bg-cover bg-center bg-no-repeat flex items-center px-10"
       style={{ backgroundImage: "url('/bookappointmentImage.png')" }}
     >
-
       <div className="w-full md:w-[520px] p-10 shadow-xl flex flex-col justify-center rounded-lg">
-
-        <h2 className="text-3xl font-bold mb-6">
-          Book Appointment
-        </h2>
+        <h2 className="text-3xl font-bold mb-6">Book Appointment</h2>
 
         <div className="flex flex-col gap-4">
-
           {/* Input fields */}
           <input
             type="text"
@@ -465,7 +599,6 @@ const handleBook = async () => {
           >
             Confirm Appointment
           </button>
-
         </div>
       </div>
     </div>
@@ -474,7 +607,6 @@ const handleBook = async () => {
 
 // Appointment History Component
 export function AppointmentHistoryPatient() {
-
   const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
@@ -492,17 +624,15 @@ export function AppointmentHistoryPatient() {
 
   // Cancel appointment
   const cancelAppointment = async (id) => {
-  try {
-   
-    await axios.delete(`${BASE_URL}/DeleteAppointment?id=${id}`);
-    fetchAppointments(); 
-  } catch (err) {
-    console.error(err);      
-  }
-};
+    try {
+      await axios.delete(`${BASE_URL}/DeleteAppointment?id=${id}`);
+      fetchAppointments();
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <div className="bg-white p-6 rounded-xl shadow-md">
-
       <h2 className="text-2xl font-bold mb-6">Appointment History</h2>
 
       {appointments.length === 0 ? (
@@ -573,17 +703,43 @@ export function Profile({ patient }) {
     <div className="max-w-lg mx-auto bg-gradient-to-b from-blue-100 to-white rounded-3xl shadow-2xl p-6 mt-10 border border-gray-200">
       {/* Avatar + Name */}
       <div className="flex flex-col items-center mb-6">
-        <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl mb-4">
-          {info.name.charAt(0).toUpperCase()}
-        </div>
-        {editing ? (
-          <input
-            type="text"
-            name="name"
-            value={info.name}
-            onChange={handleChange}
-            className="text-2xl font-bold text-gray-800 border-b border-gray-400 text-center focus:outline-none w-full max-w-xs"
+        {info.image ? (
+          <img
+            src={info.image}
+            alt="patient"
+            className="w-24 h-24 rounded-full object-cover mb-4 border border-gray-300"
           />
+        ) : (
+          <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl mb-4">
+            {info.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+
+        {editing ? (
+          <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+            <input
+              type="text"
+              name="name"
+              value={info.name}
+              onChange={handleChange}
+              className="text-2xl font-bold text-gray-800 border-b border-gray-400 text-center focus:outline-none w-full"
+            />
+            <label className="cursor-pointer bg-gray-200 px-3 py-1 rounded text-sm">
+              Choose Image
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const url = URL.createObjectURL(file);
+                    setInfo((prev) => ({ ...prev, image: url }));
+                  }
+                }}
+              />
+            </label>
+          </div>
         ) : (
           <h2 className="text-2xl font-bold text-gray-800">{info.name}</h2>
         )}
@@ -644,8 +800,11 @@ export function Profile({ patient }) {
       <div className="mt-6 flex justify-center">
         <button
           onClick={handleEditToggle}
-          className={`px-6 py-2 rounded-full text-white font-semibold transition ${editing ? "bg-green-500 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"
-            }`}
+          className={`px-6 py-2 rounded-full text-white font-semibold transition ${
+            editing
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
           {editing ? "Save Profile" : "Edit Profile"}
         </button>
@@ -660,15 +819,37 @@ Profile.propTypes = {
     email: PropTypes.string.isRequired,
     phone: PropTypes.string.isRequired,
     city: PropTypes.string.isRequired,
+    image: PropTypes.string,
   }).isRequired,
 };
 
 export function MedicalHistory() {
   // Example dynamic data (could come from props or API)
   const [history, setHistory] = useState([
-    { name: "Blood Pressure", value: 120, unit: "mmHg", icon: <FaHeartbeat />, min: 80, max: 140 },
-    { name: "Blood Sugar", value: 95, unit: "mg/dL", icon: <FaTint />, min: 70, max: 120 },
-    { name: "Heart Rate", value: 72, unit: "bpm", icon: <FaHeartbeat />, min: 60, max: 100 },
+    {
+      name: "Blood Pressure",
+      value: 120,
+      unit: "mmHg",
+      icon: <FaHeartbeat />,
+      min: 80,
+      max: 140,
+    },
+    {
+      name: "Blood Sugar",
+      value: 95,
+      unit: "mg/dL",
+      icon: <FaTint />,
+      min: 70,
+      max: 120,
+    },
+    {
+      name: "Heart Rate",
+      value: 72,
+      unit: "bpm",
+      icon: <FaHeartbeat />,
+      min: 60,
+      max: 100,
+    },
   ]);
 
   return (
@@ -681,14 +862,22 @@ export function MedicalHistory() {
         {history.map((item, idx) => {
           const percentage = Math.min(
             100,
-            Math.max(0, ((item.value - item.min) / (item.max - item.min)) * 100)
+            Math.max(
+              0,
+              ((item.value - item.min) / (item.max - item.min)) * 100,
+            ),
           );
           return (
-            <div key={idx} className="bg-white rounded-xl p-4 shadow-md flex items-center gap-4 hover:shadow-lg transition">
+            <div
+              key={idx}
+              className="bg-white rounded-xl p-4 shadow-md flex items-center gap-4 hover:shadow-lg transition"
+            >
               <div className="text-blue-600 text-3xl">{item.icon}</div>
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold text-gray-700">{item.name}</span>
+                  <span className="font-semibold text-gray-700">
+                    {item.name}
+                  </span>
                   <span className="text-gray-900 font-bold">
                     {item.value} {item.unit}
                   </span>
