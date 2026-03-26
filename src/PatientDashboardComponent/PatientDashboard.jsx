@@ -11,7 +11,8 @@ import { FaBars, FaHome, FaCalendarAlt, FaFileAlt } from "react-icons/fa";
 import { User, Stethoscope, Phone, Mail, MapPin } from "lucide-react";
 import { FaSquarePersonConfined } from "react-icons/fa6";
 
-const BASE_URL = "https://localhost:7077/api/BookAppointment";
+const BASE_URL = "https://localhost:7077/api";
+const DOCTOR_API = "https://localhost:7077/api/AddDoctors";
 
 /* ===================== MAIN LAYOUT ===================== */
 export default function PatientDashboard() {
@@ -64,9 +65,8 @@ export default function PatientDashboard() {
 
       {/* SIDEBAR */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white transition-transform ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-full w-64 bg-white transition-transform ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex justify-between items-center m-4 border-b pb-3">
           <h2 className="font-bold">CUREONIX</h2>
@@ -102,8 +102,7 @@ function SidebarItem({ to, icon, label }) {
       to={to}
       end={to === "."}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-6 py-3 ${
-          isActive ? "bg-blue-300 font-semibold" : "hover:bg-blue-200"
+        `flex items-center gap-3 px-6 py-3 ${isActive ? "bg-blue-300 font-semibold" : "hover:bg-blue-200"
         }`
       }
     >
@@ -127,16 +126,16 @@ function StatCard({ title, value }) {
 export function PDashboard() {
   const navigate = useNavigate();
   const [patientInfo, setPatientInfo] = useState({
-    name: "N/A",
+    name: "N",
     email: "N/A",
     phone: "N/A",
     city: "N/A",
-    image: "" // placeholder
   });
 
   useEffect(() => {
     const fetchPatient = async () => {
-      const patientId = localStorage.getItem("patientId");
+const patientId = localStorage.getItem("userId");
+
       if (!patientId) return; // No ID saved
 
       try {
@@ -147,13 +146,11 @@ export function PDashboard() {
         const data = res.data;
 
         // Map backend fields correctly
-        setPatientInfo({
-          name: data.Name || "N/A",
-          email: data.Email || "N/A",
-          phone: data.Phone || "N/A",
-          city: "N/A", // optional: add city if backend has it
-          image: "" // optional: add image if backend has it
-        });
+       setPatientInfo({
+  name: data.name || "N/A",
+  email: data.email || "N/A",
+  phone: data.phone || "N/A",
+});
       } catch (err) {
         console.error("Error fetching patient info:", err);
       }
@@ -179,20 +176,7 @@ export function PDashboard() {
         </h3>
 
         <div className="grid md:grid-cols-4 gap-5">
-          {/* Image */}
-          <div className="flex flex-col items-center space-y-2">
-            {patientInfo.image ? (
-              <img
-                src={patientInfo.image}
-                alt="patient"
-                className="w-24 h-24 rounded-full object-cover border border-gray-200"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center border border-gray-200">
-                <FaUser className="text-slate-500 text-2xl" />
-              </div>
-            )}
-          </div>
+          
 
           {/* Name */}
           <div className="flex items-center gap-3">
@@ -222,7 +206,7 @@ export function PDashboard() {
           </div>
         </div>
       </div>
-{/* Static Information Section */}
+      {/* Static Information Section */}
       <div className="bg-white p-6 rounded-lg mt-6">
         <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <FaHeartbeat className="text-red-500" />
@@ -310,37 +294,58 @@ export function PDashboard() {
   );
 }
 
-// BOOK APPOINTMENT COMPONENT
+
+
 export function BookAppointment() {
+  const BASE_URL = "https://localhost:7077/api";
+
   // Form states
   const [appointments, setAppointments] = useState([]);
-
   const [patientName, setPatientName] = useState("");
   const [contact, setContact] = useState("");
-  const [doctor, setDoctor] = useState("");
   const [treatment, setTreatment] = useState("");
+  const [doctor, setDoctor] = useState("");
+  const [city, setCity] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [city, setCity] = useState("");
+  const [doctors, setDoctors] = useState([]);
+
+  // Fetch all doctors from backend
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/AddDoctors`);
+        setDoctors(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch doctors:", err);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  // Auto-select first doctor when treatment changes
+  useEffect(() => {
+    if (treatment) {
+      const filtered = doctors.filter(
+        (doc) =>
+          doc.Specialization?.trim().toLowerCase() === treatment.trim().toLowerCase()
+      );
+      setDoctor(filtered.length > 0 ? filtered[0].DoctorName : "");
+    } else {
+      setDoctor("");
+    }
+  }, [treatment, doctors]);
 
   // Handle booking logic
   const handleBook = async () => {
-    if (
-      !patientName ||
-      !contact ||
-      !doctor ||
-      !treatment ||
-      !date ||
-      !time ||
-      !city
-    ) {
+    if (!patientName || !contact || !doctor || !treatment || !date || !time || !city) {
       alert("Please fill all fields");
       return;
     }
 
     const newAppointment = {
       patientName,
-      contactNumber: contact, // Matches backend model
+      contactNumber: contact,
       doctorName: doctor,
       reason: treatment,
       appointmentDate: date,
@@ -349,30 +354,33 @@ export function BookAppointment() {
     };
 
     try {
-      // FIX: Send 'newAppointment' and use the correct sub-route
-      const response = await axios.post(
-        `${BASE_URL}/BookAppointment`,
-        newAppointment,
-      );
-
+      const response = await axios.post(`${BASE_URL}/BookAppointment/BookAppointment`, newAppointment);
       alert("Appointment booked successfully");
       setAppointments([...appointments, response.data]);
-      // ... rest of your reset logic
+
+      // Reset form
+      setPatientName("");
+      setContact("");
+      setTreatment("");
+      setDoctor("");
+      setCity("");
+      setDate("");
+      setTime("");
     } catch (error) {
       console.error(error);
       alert("Error saving appointment");
     }
   };
+
   return (
     <div
       className="min-h-screen w-full bg-cover bg-center bg-no-repeat flex items-center px-10"
       style={{ backgroundImage: "url('/bookappointmentImage.png')" }}
     >
-      <div className="w-full md:w-[520px] p-10 shadow-xl flex flex-col justify-center rounded-lg">
+      <div className="w-full md:w-[520px] p-10 shadow-xl flex flex-col justify-center rounded-lg bg-white">
         <h2 className="text-3xl font-bold mb-6">Book Appointment</h2>
 
         <div className="flex flex-col gap-4">
-          {/* Input fields */}
           <input
             type="text"
             placeholder="Patient Name"
@@ -390,14 +398,10 @@ export function BookAppointment() {
           />
 
           {/* Select treatment */}
-          {/* Select treatment */}
           <select
             className="border p-2 rounded"
             value={treatment}
-            onChange={(e) => {
-              setTreatment(e.target.value);
-              setDoctor(""); // reset doctor if treatment changes
-            }}
+            onChange={(e) => setTreatment(e.target.value)}
           >
             <option value="">Select Treatment</option>
             <option value="Dental">Dental</option>
@@ -419,119 +423,19 @@ export function BookAppointment() {
             onChange={(e) => setDoctor(e.target.value)}
           >
             <option value="">Select Doctor</option>
-
-            {treatment === "Dental" && (
-              <>
-                <option value="Dr. Smith">Dr. Smith</option>
-                <option value="Dr. John">Dr. John</option>
-                <option value="Dr. Priya">Dr. Priya</option>
-                <option value="Dr. Rahul">Dr. Rahul</option>
-                <option value="Dr. Sneha">Dr. Sneha</option>
-                <option value="Dr. Kiran">Dr. Kiran</option>
-              </>
-            )}
-
-            {treatment === "Cardiology" && (
-              <>
-                <option value="Dr. Meera">Dr. Meera</option>
-                <option value="Dr. Arjun">Dr. Arjun</option>
-                <option value="Dr. Vikram">Dr. Vikram</option>
-                <option value="Dr. Neha">Dr. Neha</option>
-                <option value="Dr. Rohan">Dr. Rohan</option>
-                <option value="Dr. Tanya">Dr. Tanya</option>
-              </>
-            )}
-
-            {treatment === "Eye" && (
-              <>
-                <option value="Dr. Aditi">Dr. Aditi</option>
-                <option value="Dr. Sameer">Dr. Sameer</option>
-                <option value="Dr. Kavya">Dr. Kavya</option>
-                <option value="Dr. Rajesh">Dr. Rajesh</option>
-                <option value="Dr. Anil">Dr. Anil</option>
-                <option value="Dr. Priya">Dr. Priya</option>
-              </>
-            )}
-
-            {treatment === "Orthopedic" && (
-              <>
-                <option value="Dr. Ravi">Dr. Ravi</option>
-                <option value="Dr. Nisha">Dr. Nisha</option>
-                <option value="Dr. Sameer">Dr. Sameer</option>
-                <option value="Dr. Kiran">Dr. Kiran</option>
-                <option value="Dr. Tanya">Dr. Tanya</option>
-                <option value="Dr. Arjun">Dr. Arjun</option>
-              </>
-            )}
-
-            {treatment === "Neurology" && (
-              <>
-                <option value="Dr. Ananya">Dr. Ananya</option>
-                <option value="Dr. Raj">Dr. Raj</option>
-                <option value="Dr. Simran">Dr. Simran</option>
-                <option value="Dr. Varun">Dr. Varun</option>
-                <option value="Dr. Meera">Dr. Meera</option>
-                <option value="Dr. Rohan">Dr. Rohan</option>
-              </>
-            )}
-
-            {treatment === "Dermatology" && (
-              <>
-                <option value="Dr. Sneha">Dr. Sneha</option>
-                <option value="Dr. Priya">Dr. Priya</option>
-                <option value="Dr. Kavya">Dr. Kavya</option>
-                <option value="Dr. Arjun">Dr. Arjun</option>
-                <option value="Dr. Neha">Dr. Neha</option>
-                <option value="Dr. Sameer">Dr. Sameer</option>
-              </>
-            )}
-
-            {treatment === "ENT" && (
-              <>
-                <option value="Dr. Rajesh">Dr. Rajesh</option>
-                <option value="Dr. Meera">Dr. Meera</option>
-                <option value="Dr. Anil">Dr. Anil</option>
-                <option value="Dr. Nisha">Dr. Nisha</option>
-                <option value="Dr. Varun">Dr. Varun</option>
-                <option value="Dr. Tanya">Dr. Tanya</option>
-              </>
-            )}
-
-            {treatment === "Gynecology" && (
-              <>
-                <option value="Dr. Kavya">Dr. Kavya</option>
-                <option value="Dr. Ananya">Dr. Ananya</option>
-                <option value="Dr. Priya">Dr. Priya</option>
-                <option value="Dr. Sneha">Dr. Sneha</option>
-                <option value="Dr. Meera">Dr. Meera</option>
-                <option value="Dr. Nisha">Dr. Nisha</option>
-              </>
-            )}
-
-            {treatment === "Pediatrics" && (
-              <>
-                <option value="Dr. Rohan">Dr. Rohan</option>
-                <option value="Dr. Tanya">Dr. Tanya</option>
-                <option value="Dr. Anil">Dr. Anil</option>
-                <option value="Dr. Priya">Dr. Priya</option>
-                <option value="Dr. Sneha">Dr. Sneha</option>
-                <option value="Dr. Kavya">Dr. Kavya</option>
-              </>
-            )}
-
-            {treatment === "General Medicine" && (
-              <>
-                <option value="Dr. Raj">Dr. Raj</option>
-                <option value="Dr. Arjun">Dr. Arjun</option>
-                <option value="Dr. Meera">Dr. Meera</option>
-                <option value="Dr. Simran">Dr. Simran</option>
-                <option value="Dr. Ravi">Dr. Ravi</option>
-                <option value="Dr. Nisha">Dr. Nisha</option>
-              </>
-            )}
+            {doctors
+              .filter(
+                (doc) =>
+                  doc.Specialization?.trim().toLowerCase() === treatment.trim().toLowerCase()
+              )
+              .map((doc) => (
+                <option key={doc.Id} value={doc.DoctorName}>
+                  {doc.DoctorName} ({doc.Specialization})
+                </option>
+              ))}
           </select>
 
-          {/* City selection */}
+          {/* Select city */}
           <select
             className="border p-2 rounded"
             value={city}
@@ -562,11 +466,12 @@ export function BookAppointment() {
             <option value="Bijapur">Bijapur</option>
             <option value="Other">Other</option>
           </select>
+
           <input
             type="date"
             className="border p-2 rounded"
             value={date}
-            min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} // can't pick today
+            min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
             onChange={(e) => {
               const selected = new Date(e.target.value + "T00:00:00");
               if (selected.getDay() === 0) {
@@ -577,7 +482,7 @@ export function BookAppointment() {
               setDate(e.target.value);
             }}
           />
-          {/* Time selection */}
+
           <select
             className="border p-2 rounded"
             value={time}
@@ -592,7 +497,6 @@ export function BookAppointment() {
             <option value="04:00 PM">04:00 PM</option>
           </select>
 
-          {/* Confirm button */}
           <button
             onClick={handleBook}
             className="bg-blue-600 text-white py-2 rounded-lg"
@@ -800,11 +704,10 @@ export function Profile({ patient }) {
       <div className="mt-6 flex justify-center">
         <button
           onClick={handleEditToggle}
-          className={`px-6 py-2 rounded-full text-white font-semibold transition ${
-            editing
-              ? "bg-green-500 hover:bg-green-600"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          className={`px-6 py-2 rounded-full text-white font-semibold transition ${editing
+            ? "bg-green-500 hover:bg-green-600"
+            : "bg-blue-600 hover:bg-blue-700"
+            }`}
         >
           {editing ? "Save Profile" : "Edit Profile"}
         </button>
