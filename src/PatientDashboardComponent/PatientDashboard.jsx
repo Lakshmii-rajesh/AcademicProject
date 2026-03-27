@@ -294,13 +294,12 @@ const patientId = localStorage.getItem("userId");
   );
 }
 
-
-
 export function BookAppointment() {
   const BASE_URL = "https://localhost:7077/api";
 
-  // Form states
+  // ================= STATES =================
   const [appointments, setAppointments] = useState([]);
+
   const [patientName, setPatientName] = useState("");
   const [contact, setContact] = useState("");
   const [treatment, setTreatment] = useState("");
@@ -308,37 +307,57 @@ export function BookAppointment() {
   const [city, setCity] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+
   const [doctors, setDoctors] = useState([]);
 
-  // Fetch all doctors from backend
+  // ================= FETCH DOCTORS =================
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/AddDoctors`);
-        setDoctors(res.data || []);
+
+        // ✅ NORMALIZE DATA (FIXES YOUR ISSUE)
+        const normalized = (res.data || []).map((d) => ({
+          id: d.id || d.Id,
+          doctorName: d.doctorName || d.DoctorName,
+          specialization: d.specialization || d.Specialization,
+        }));
+
+        setDoctors(normalized);
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
       }
     };
+
     fetchDoctors();
   }, []);
 
-  // Auto-select first doctor when treatment changes
+  // ================= AUTO SELECT DOCTOR =================
   useEffect(() => {
     if (treatment) {
       const filtered = doctors.filter(
         (doc) =>
-          doc.Specialization?.trim().toLowerCase() === treatment.trim().toLowerCase()
+          doc.specialization?.trim().toLowerCase() ===
+          treatment.trim().toLowerCase()
       );
-      setDoctor(filtered.length > 0 ? filtered[0].DoctorName : "");
+
+      setDoctor(filtered.length > 0 ? filtered[0].doctorName : "");
     } else {
       setDoctor("");
     }
   }, [treatment, doctors]);
 
-  // Handle booking logic
+  // ================= BOOK APPOINTMENT =================
   const handleBook = async () => {
-    if (!patientName || !contact || !doctor || !treatment || !date || !time || !city) {
+    if (
+      !patientName ||
+      !contact ||
+      !doctor ||
+      !treatment ||
+      !date ||
+      !time ||
+      !city
+    ) {
       alert("Please fill all fields");
       return;
     }
@@ -354,11 +373,16 @@ export function BookAppointment() {
     };
 
     try {
-      const response = await axios.post(`${BASE_URL}/BookAppointment/BookAppointment`, newAppointment);
+      const response = await axios.post(
+        `${BASE_URL}/BookAppointment/BookAppointment`,
+        newAppointment
+      );
+
       alert("Appointment booked successfully");
+
       setAppointments([...appointments, response.data]);
 
-      // Reset form
+      // ================= RESET FORM =================
       setPatientName("");
       setContact("");
       setTreatment("");
@@ -372,6 +396,14 @@ export function BookAppointment() {
     }
   };
 
+  // ================= FILTER DOCTORS =================
+  const filteredDoctors = doctors.filter(
+    (doc) =>
+      doc.specialization?.trim().toLowerCase() ===
+      treatment?.trim().toLowerCase()
+  );
+
+  // ================= UI =================
   return (
     <div
       className="min-h-screen w-full bg-cover bg-center bg-no-repeat flex items-center px-10"
@@ -381,6 +413,8 @@ export function BookAppointment() {
         <h2 className="text-3xl font-bold mb-6">Book Appointment</h2>
 
         <div className="flex flex-col gap-4">
+
+          {/* Patient Name */}
           <input
             type="text"
             placeholder="Patient Name"
@@ -389,6 +423,7 @@ export function BookAppointment() {
             onChange={(e) => setPatientName(e.target.value)}
           />
 
+          {/* Contact */}
           <input
             type="text"
             placeholder="Contact"
@@ -397,7 +432,7 @@ export function BookAppointment() {
             onChange={(e) => setContact(e.target.value)}
           />
 
-          {/* Select treatment */}
+          {/* Treatment */}
           <select
             className="border p-2 rounded"
             value={treatment}
@@ -416,26 +451,26 @@ export function BookAppointment() {
             <option value="General Medicine">General Medicine</option>
           </select>
 
-          {/* Select doctor */}
+          {/* Doctor */}
           <select
             className="border p-2 rounded"
             value={doctor}
             onChange={(e) => setDoctor(e.target.value)}
           >
             <option value="">Select Doctor</option>
-            {doctors
-              .filter(
-                (doc) =>
-                  doc.Specialization?.trim().toLowerCase() === treatment.trim().toLowerCase()
-              )
-              .map((doc) => (
-                <option key={doc.Id} value={doc.DoctorName}>
-                  {doc.DoctorName} ({doc.Specialization})
+
+            {filteredDoctors.length > 0 ? (
+              filteredDoctors.map((doc) => (
+                <option key={doc.id} value={doc.doctorName}>
+                  {doc.doctorName} ({doc.specialization})
                 </option>
-              ))}
+              ))
+            ) : (
+              <option>No doctors available</option>
+            )}
           </select>
 
-          {/* Select city */}
+          {/* City */}
           <select
             className="border p-2 rounded"
             value={city}
@@ -452,21 +487,10 @@ export function BookAppointment() {
             <option value="Shimoga">Shimoga</option>
             <option value="Tumkur">Tumkur</option>
             <option value="Udupi">Udupi</option>
-            <option value="Bidar">Bidar</option>
-            <option value="Bellary">Bellary</option>
-            <option value="Raichur">Raichur</option>
-            <option value="Gulbarga">Gulbarga</option>
-            <option value="Chitradurga">Chitradurga</option>
-            <option value="Hassan">Hassan</option>
-            <option value="Mandya">Mandya</option>
-            <option value="Chikmagalur">Chikmagalur</option>
-            <option value="Kolar">Kolar</option>
-            <option value="Karwar">Karwar</option>
-            <option value="Bagalkot">Bagalkot</option>
-            <option value="Bijapur">Bijapur</option>
             <option value="Other">Other</option>
           </select>
 
+          {/* Date */}
           <input
             type="date"
             className="border p-2 rounded"
@@ -474,15 +498,18 @@ export function BookAppointment() {
             min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
             onChange={(e) => {
               const selected = new Date(e.target.value + "T00:00:00");
+
               if (selected.getDay() === 0) {
                 alert("Sunday appointments are not available");
                 setDate("");
                 return;
               }
+
               setDate(e.target.value);
             }}
           />
 
+          {/* Time */}
           <select
             className="border p-2 rounded"
             value={time}
@@ -497,9 +524,10 @@ export function BookAppointment() {
             <option value="04:00 PM">04:00 PM</option>
           </select>
 
+          {/* Button */}
           <button
             onClick={handleBook}
-            className="bg-blue-600 text-white py-2 rounded-lg"
+            className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
           >
             Confirm Appointment
           </button>
@@ -511,77 +539,99 @@ export function BookAppointment() {
 
 // Appointment History Component
 export function AppointmentHistoryPatient() {
-  const [appointments, setAppointments] = useState([]);
-
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
-
-  const fetchAppointments = async () => {
-    try {
-      const res = await axios.get(BASE_URL);
-      setAppointments(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Cancel appointment
-  const cancelAppointment = async (id) => {
-    try {
-      await axios.delete(`${BASE_URL}/DeleteAppointment?id=${id}`);
-      fetchAppointments();
-    } catch (err) {
-      console.error(err);
-    }
-  };
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Appointment History</h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-100 to-teal-50 p-6">
 
-      {appointments.length === 0 ? (
-        <p>No appointments booked.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300">
-            <thead>
-              <tr className="bg-blue-100">
-                <th className="border p-2">Patient</th>
-                <th className="border p-2">Contact</th>
-                <th className="border p-2">Treatment</th>
-                <th className="border p-2">Doctor</th>
-                <th className="border p-2">City</th>
-                <th className="border p-2">Date</th>
-                <th className="border p-2">Time</th>
-                <th className="border p-2">Status</th>
-                <th className="border p-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.map((a, i) => (
-                <tr key={i} className="text-center">
-                  <td className="border p-2">{a.patientName}</td>
-                  <td className="border p-2">{a.contact}</td>
-                  <td className="border p-2">{a.treatment}</td>
-                  <td className="border p-2">{a.doctor}</td>
-                  <td className="border p-2">{a.city}</td>
-                  <td className="border p-2">{a.date}</td>
-                  <td className="border p-2">{a.time}</td>
-                  <td className="border p-2">{a.status}</td>
-                  <td className="border p-2">
-                    <button
-                      onClick={() => cancelAppointment(i)}
-                      className="bg-red-500 text-white px-3 py-1 rounded"
-                    >
-                      Cancel
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="max-w-5xl mx-auto">
+
+        {/* Title */}
+        <h2 className="text-4xl font-bold text-center mb-8 text-slate-800 animate-fadeIn">
+          My Experience
+        </h2>
+
+        {/* Summary */}
+        <div className="bg-white/70 backdrop-blur-md p-5 rounded-xl mb-8 shadow-md border border-slate-200 
+                        transition-all duration-700 hover:scale-[1.02]">
+          <p className="text-lg font-semibold text-teal-600">
+            ⭐ Average Rating: 4.2 / 5
+          </p>
+          <p className="text-slate-600">
+            😊 Overall Patient Satisfaction: High
+          </p>
         </div>
-      )}
+
+        {/* Cards */}
+        <div className="space-y-6">
+
+          {/* Card 1 */}
+          <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-500 
+                          transition-all duration-700 hover:shadow-xl hover:-translate-y-1">
+            <h3 className="font-semibold text-xl text-slate-800 mb-2">
+              General Checkup
+            </h3>
+            <p className="text-yellow-400 text-2xl">★★★★☆</p>
+            <p className="text-slate-600 mt-3">
+              Doctor was very friendly and explained everything clearly.
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Dr. Sharma • 20 March 2026
+            </p>
+          </div>
+
+          {/* Card 2 */}
+          <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500 
+                          transition-all duration-700 hover:shadow-xl hover:-translate-y-1">
+            <h3 className="font-semibold text-xl text-slate-800 mb-2">
+              Dental Treatment
+            </h3>
+            <p className="text-yellow-400 text-2xl">★★★☆☆</p>
+            <p className="text-slate-600 mt-3">
+              Treatment was good but waiting time was a bit long.
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Dr. Mehta • 10 March 2026
+            </p>
+          </div>
+
+          {/* Card 3 */}
+          <div className="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500 
+                          transition-all duration-700 hover:shadow-xl hover:-translate-y-1">
+            <h3 className="font-semibold text-xl text-slate-800 mb-2">
+              Eye Checkup
+            </h3>
+            <p className="text-yellow-400 text-2xl">★★★★★</p>
+            <p className="text-slate-600 mt-3">
+              Excellent service and very quick process. Highly satisfied.
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Dr. Reddy • 05 March 2026
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Animation */}
+      <style>
+        {`
+          .animate-fadeIn {
+            animation: fadeIn 1.2s ease-in-out;
+          }
+
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}
+      </style>
+
     </div>
   );
 }
