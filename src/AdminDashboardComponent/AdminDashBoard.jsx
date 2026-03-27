@@ -55,7 +55,7 @@ export default function AdminDashBoard() {
             <div className="absolute right-0 mt-2 w-24 bg-white border rounded shadow-md">
               <button
                 className="w-full text-left px-4 py-2 hover:bg-blue-200"
-                onClick={() => (window.location.href = "/login")}
+                onClick={() => (window.location.href = "/")}
               >
                 Logout
               </button>

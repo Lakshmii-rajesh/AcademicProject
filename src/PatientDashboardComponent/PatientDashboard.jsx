@@ -10,6 +10,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaBars, FaHome, FaCalendarAlt, FaFileAlt } from "react-icons/fa";
 import { User, Stethoscope, Phone, Mail, MapPin } from "lucide-react";
 import { FaSquarePersonConfined } from "react-icons/fa6";
+import { BiSolidUserCircle } from "react-icons/bi";
 
 const BASE_URL = "https://localhost:7077/api";
 const DOCTOR_API = "https://localhost:7077/api/AddDoctors";
@@ -54,7 +55,7 @@ export default function PatientDashboard() {
             <div className="absolute right-6 mt-2 bg-white border rounded">
               <button
                 className="px-4 py-2 hover:bg-blue-200"
-                onClick={() => (window.location.href = "/login")}
+                onClick={() => (window.location.href = "/")}
               >
                 Logout
               </button>
@@ -125,88 +126,95 @@ function StatCard({ title, value }) {
 
 export function PDashboard() {
   const navigate = useNavigate();
+
   const [patientInfo, setPatientInfo] = useState({
-    name: "N",
-    email: "N/A",
-    phone: "N/A",
-    city: "N/A",
+    name: "Loading...",
+    email: "Loading...",
+    phone: "Loading..."
   });
 
   useEffect(() => {
     const fetchPatient = async () => {
-const patientId = localStorage.getItem("userId");
+      const email = localStorage.getItem("userEmail");
 
-      if (!patientId) return; // No ID saved
+      // 🚨 If not logged in
+      if (!email) {
+        navigate("/patient-login");
+        return;
+      }
 
       try {
         const res = await axios.get(
-          `https://localhost:7077/api/Regester/PatientById/${patientId}`
+          `https://localhost:7077/api/Regester/PatientByEmail/${email}`
         );
 
         const data = res.data;
 
-        // Map backend fields correctly
-       setPatientInfo({
-  name: data.name || "N/A",
-  email: data.email || "N/A",
-  phone: data.phone || "N/A",
-});
+        setPatientInfo({
+          name: data.name,
+          email: data.email,
+          phone: data.phone
+        });
+
       } catch (err) {
         console.error("Error fetching patient info:", err);
+
+        // 🚨 If API fails → logout
+        localStorage.removeItem("userEmail");
+        navigate("/patient-login");
       }
     };
 
     fetchPatient();
-  }, []);
+  }, [navigate]);
 
   return (
     <>
+      {/* PAGE TITLE */}
       <h1 className="text-4xl font-bold my-6">Patient Dashboard</h1>
 
-      {/* Welcome */}
+      {/* WELCOME CARD */}
       <div className="bg-blue-300 p-5 rounded-lg mb-6">
-        <h2 className="text-2xl font-semibold">Welcome Back</h2>
+        <h2 className="text-2xl font-semibold">
+          Welcome {patientInfo.name}
+        </h2>
         <p>Here is your health summary</p>
       </div>
 
-      {/* Patient Details */}
+      {/* PATIENT DETAILS */}
       <div className="bg-white p-6 rounded-lg mb-6">
-        <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-          Patient Details
-        </h3>
+        <h3 className="text-xl font-semibold mb-6">Patient Details</h3>
 
-        <div className="grid md:grid-cols-4 gap-5">
-          
+        <div className="grid md:grid-cols-3 gap-5">
 
-          {/* Name */}
           <div className="flex items-center gap-3">
             <FaUser className="text-gray-500" />
             <div>
-              <p className="text-gray-500 text-sm">Patient Name</p>
-              <p className="font-semibold text-lg">{patientInfo.name}</p>
+              <p className="text-sm text-gray-500">Name</p>
+              <p className="font-semibold">{patientInfo.name}</p>
             </div>
           </div>
 
-          {/* Email */}
           <div className="flex items-center gap-3">
             <MdEmail className="text-gray-500" />
             <div>
-              <p className="text-gray-500 text-sm">Email</p>
-              <p className="font-semibold text-lg">{patientInfo.email}</p>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-semibold">{patientInfo.email}</p>
             </div>
           </div>
 
-          {/* Contact */}
           <div className="flex items-center gap-3">
             <MdPhone className="text-gray-500" />
             <div>
-              <p className="text-gray-500 text-sm">Contact</p>
-              <p className="font-semibold text-lg">{patientInfo.phone}</p>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-semibold">{patientInfo.phone}</p>
             </div>
           </div>
+
         </div>
       </div>
-      {/* Static Information Section */}
+
+      {/* HEALTH SECTION (UNCHANGED) */}
       <div className="bg-white p-6 rounded-lg mt-6">
         <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <FaHeartbeat className="text-red-500" />
@@ -214,67 +222,63 @@ const patientId = localStorage.getItem("userId");
         </h3>
 
         <div className="grid md:grid-cols-2 gap-6">
+
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-medium text-gray-800">Stay Hydrated</p>
-                <p className="text-sm text-gray-600">Drink at least 8 glasses of water daily to maintain good health.</p>
-              </div>
+            <div>
+              <p className="font-medium">💧 Stay Hydrated</p>
+              <p className="text-sm text-gray-600">
+                Drink at least 8 glasses of water daily.
+              </p>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-medium text-gray-800">Regular Check-ups</p>
-                <p className="text-sm text-gray-600">Schedule annual health check-ups to detect issues early.</p>
-              </div>
+            <div>
+              <p className="font-medium">🩺 Regular Check-ups</p>
+              <p className="text-sm text-gray-600">
+                Visit doctor every 6–12 months.
+              </p>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-medium text-gray-800">Healthy Diet</p>
-                <p className="text-sm text-gray-600">Include fruits, vegetables, and whole grains in your daily meals.</p>
-              </div>
+            <div>
+              <p className="font-medium">🥗 Healthy Diet</p>
+              <p className="text-sm text-gray-600">
+                Eat fruits, vegetables and balanced meals.
+              </p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-medium text-gray-800">Exercise Regularly</p>
-                <p className="text-sm text-gray-600">Aim for at least 30 minutes of moderate exercise daily.</p>
-              </div>
+            <div>
+              <p className="font-medium">🏃 Exercise</p>
+              <p className="text-sm text-gray-600">
+                30 minutes daily walking or workout.
+              </p>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-medium text-gray-800">Emergency Contact</p>
-                <p className="text-sm text-gray-600">Keep emergency numbers handy: Ambulance - 108, Police - 100</p>
-              </div>
+            <div>
+              <p className="font-medium">🚑 Emergency</p>
+              <p className="text-sm text-gray-600">
+                Ambulance: 108 | Police: 100
+              </p>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-teal-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-medium text-gray-800">Mental Health</p>
-                <p className="text-sm text-gray-600">Take time for relaxation and maintain work-life balance.</p>
-              </div>
+            <div>
+              <p className="font-medium">🧠 Mental Health</p>
+              <p className="text-sm text-gray-600">
+                Take breaks and reduce stress.
+              </p>
             </div>
           </div>
+
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-          <p className="text-sm text-blue-800">
-            <strong>Remember:</strong> Your health is your wealth. Regular monitoring and healthy lifestyle choices lead to a better quality of life.
+        <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500">
+          <p className="text-sm text-blue-700">
+            <strong>Reminder:</strong> Healthy lifestyle = Better life 💙
           </p>
         </div>
       </div>
 
-      {/* Buttons */}
+      {/* BUTTONS */}
       <div className="flex gap-4 my-5">
         <button
           onClick={() => navigate("book")}
@@ -636,25 +640,51 @@ export function AppointmentHistoryPatient() {
   );
 }
 // Profile
-export function Profile({ patient }) {
-  const [editing, setEditing] = useState(false);
-  const [info, setInfo] = useState(patient);
+
+
+export function Profile() {
+  const [info, setInfo] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    localStorage.setItem("patientInfo", JSON.stringify(info));
-  }, [info]);
+    const email = localStorage.getItem("userEmail");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setInfo((prev) => ({ ...prev, [name]: value }));
+    console.log("Stored Email:", email); // 🔍 debug
+
+    if (!email || email === "undefined") {
+      navigate("/patient-login");
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(
+          `https://localhost:7077/api/Regester/PatientProfileByEmail/${email}`
+        );
+
+        setInfo(res.data);
+
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("userEmail");
+    navigate("/");
   };
 
-  const handleEditToggle = () => {
-    setEditing(!editing);
-  };
+  // ⏳ Loading state
+  if (!info) {
+    return <h2 className="text-center mt-10">Loading profile...</h2>;
+  }
 
   return (
     <div className="max-w-lg mx-auto bg-gradient-to-b from-blue-100 to-white rounded-3xl shadow-2xl p-6 mt-10 border border-gray-200">
+
       {/* Avatar + Name */}
       <div className="flex flex-col items-center mb-6">
         {info.image ? (
@@ -665,101 +695,41 @@ export function Profile({ patient }) {
           />
         ) : (
           <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl mb-4">
-            {info.name.charAt(0).toUpperCase()}
+            {info.name?.charAt(0).toUpperCase()}
           </div>
         )}
 
-        {editing ? (
-          <div className="flex flex-col items-center gap-2 w-full max-w-xs">
-            <input
-              type="text"
-              name="name"
-              value={info.name}
-              onChange={handleChange}
-              className="text-2xl font-bold text-gray-800 border-b border-gray-400 text-center focus:outline-none w-full"
-            />
-            <label className="cursor-pointer bg-gray-200 px-3 py-1 rounded text-sm">
-              Choose Image
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    const url = URL.createObjectURL(file);
-                    setInfo((prev) => ({ ...prev, image: url }));
-                  }
-                }}
-              />
-            </label>
-          </div>
-        ) : (
-          <h2 className="text-2xl font-bold text-gray-800">{info.name}</h2>
-        )}
+        <h2 className="text-2xl font-bold text-gray-800">{info.name}</h2>
       </div>
 
-      {/* Info Grid */}
-      <div className="grid grid-cols-1 gap-4 text-gray-700">
+      {/* Info */}
+      <div className="grid gap-4 text-gray-700">
         <div className="flex items-center gap-3">
-          <MdEmail className="text-blue-600 w-6 h-6" />
-          <span className="font-semibold w-24">Email:</span>
-          {editing ? (
-            <input
-              type="email"
-              name="email"
-              value={info.email}
-              onChange={handleChange}
-              className="border-b border-gray-400 focus:outline-none flex-1"
-            />
-          ) : (
-            <span>{info.email}</span>
-          )}
+          <BiSolidUserCircle className="text-blue-600 w-6 h-6" />
+          <span className="font-semibold w-24">Name:</span>
+          <span>{info.name}</span>
         </div>
 
         <div className="flex items-center gap-3">
           <MdPhone className="text-blue-600 w-6 h-6" />
           <span className="font-semibold w-24">Phone:</span>
-          {editing ? (
-            <input
-              type="tel"
-              name="phone"
-              value={info.phone}
-              onChange={handleChange}
-              className="border-b border-gray-400 focus:outline-none flex-1"
-            />
-          ) : (
-            <span>{info.phone}</span>
-          )}
+          <span>{info.phone}</span>
         </div>
 
         <div className="flex items-center gap-3">
-          <MdLocationCity className="text-blue-600 w-6 h-6" />
-          <span className="font-semibold w-24">City:</span>
-          {editing ? (
-            <input
-              type="text"
-              name="city"
-              value={info.city}
-              onChange={handleChange}
-              className="border-b border-gray-400 focus:outline-none flex-1"
-            />
-          ) : (
-            <span>{info.city}</span>
-          )}
+          <MdEmail className="text-blue-600 w-6 h-6" />
+          <span className="font-semibold w-24">Email:</span>
+          <span>{info.email}</span>
         </div>
       </div>
 
-      {/* Edit / Save Button */}
+      {/* Logout */}
       <div className="mt-6 flex justify-center">
         <button
-          onClick={handleEditToggle}
-          className={`px-6 py-2 rounded-full text-white font-semibold transition ${editing
-            ? "bg-green-500 hover:bg-green-600"
-            : "bg-blue-600 hover:bg-blue-700"
-            }`}
+          onClick={handleLogout}
+          className="px-6 py-2 rounded-full text-white font-semibold bg-blue-600 hover:bg-blue-700"
         >
-          {editing ? "Save Profile" : "Edit Profile"}
+          Logout
         </button>
       </div>
     </div>

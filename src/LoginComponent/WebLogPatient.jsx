@@ -19,6 +19,7 @@ function WebLogPatient() {
         // Login
         const res = await loginPatient({ email: data.email, password: data.password });
         alert(res.message);
+       localStorage.setItem("userEmail", res.email || data.email);
         navigate("/patient-dashboard");
       }
     } catch (err) {
@@ -27,7 +28,7 @@ function WebLogPatient() {
   };
 
   return (
-    <div 
+    <div
       className="h-screen pl-20 w-full flex justify-start items-center bg-cover bg-center"
       style={{ backgroundImage: "url('LoginForm.jpeg')" }}
     >
