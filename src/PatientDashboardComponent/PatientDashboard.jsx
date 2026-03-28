@@ -133,40 +133,36 @@ export function PDashboard() {
     phone: "Loading..."
   });
 
-  useEffect(() => {
-    const fetchPatient = async () => {
-      const email = localStorage.getItem("userEmail");
+useEffect(() => {
+  const fetchPatient = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const email = user?.email;
 
-      // 🚨 If not logged in
       if (!email) {
-        navigate("/patient-login");
+        console.log("No email found in localStorage");
         return;
       }
 
-      try {
-        const res = await axios.get(
-          `https://localhost:7077/api/Regester/PatientByEmail/${email}`
-        );
+      const res = await axios.get(
+        `https://localhost:7077/api/Regester/PatientByEmail/${email}`
+      );
 
-        const data = res.data;
+      const data = res.data;
 
-        setPatientInfo({
-          name: data.name,
-          email: data.email,
-          phone: data.phone
-        });
+      setPatientInfo({
+        name: data.name,
+        email: data.email,
+        phone: data.phone
+      });
 
-      } catch (err) {
-        console.error("Error fetching patient info:", err);
+    } catch (err) {
+      console.error("Error fetching patient info:", err);
+    }
+  };
 
-        // 🚨 If API fails → logout
-        localStorage.removeItem("userEmail");
-        navigate("/patient-login");
-      }
-    };
-
-    fetchPatient();
-  }, [navigate]);
+  fetchPatient();
+}, []);
 
   return (
     <>
@@ -646,31 +642,27 @@ export function Profile() {
   const [info, setInfo] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const email = localStorage.getItem("userEmail");
+useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const email = user?.email;
 
-    console.log("Stored Email:", email); // 🔍 debug
+      if (!email) return;
 
-    if (!email || email === "undefined") {
-      navigate("/patient-login");
-      return;
+      const res = await axios.get(
+        `https://localhost:7077/api/Regester/PatientProfileByEmail/${email}`
+      );
+
+      setInfo(res.data);
+
+    } catch (err) {
+      console.error("Error fetching profile:", err);
     }
+  };
 
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get(
-          `https://localhost:7077/api/Regester/PatientProfileByEmail/${email}`
-        );
-
-        setInfo(res.data);
-
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-      }
-    };
-
-    fetchProfile();
-  }, [navigate]);
+  fetchProfile();
+}, []);
 
   const handleLogout = () => {
     localStorage.removeItem("userEmail");

@@ -117,13 +117,59 @@ function SidebarItem({ to, icon, label }) {
 export function DDashboard() {
   const navigate = useNavigate();
 
+  const [doctor, setDoctor] = useState({
+    name: "Loading...",
+    email: "Loading...",
+    specialization: "Loading..."
+  });
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const email = user?.email;
+
+        if (!email) {
+          console.log("No email found");
+          return;
+        }
+
+        const res = await axios.get(
+          `https://localhost:7077/api/AddDoctors/DoctorByEmail/${email}`
+        );
+
+        const data = res.data;
+
+        setDoctor({
+          name: data.name || data.doctorName,
+          email: data.email,
+          specialization: data.specialization
+        });
+
+      } catch (err) {
+        console.error("Error fetching doctor:", err);
+      }
+    };
+
+    fetchDoctor();
+  }, []);
+
   return (
     <>
       <h1 className="text-4xl font-bold my-6">Doctor Dashboard</h1>
 
-      {/* Quick cards for navigation */}
+      {/* ✅ Welcome Card */}
+      <div className="bg-blue-300 p-5 rounded-lg mb-6">
+        <h2 className="text-2xl font-semibold">
+          Welcome Dr. {doctor.name}
+        </h2>
+        <p>{doctor.specialization}</p>
+      </div>
+
+      {/* Quick cards */}
       <div className="grid md:grid-cols-2 gap-6">
-        {/* My Profile card */}
+        
+        {/* Profile */}
         <div
           onClick={() => navigate("profile")}
           className="bg-blue-200 p-6 rounded-lg shadow text-center cursor-pointer hover:shadow-lg transition"
@@ -132,7 +178,7 @@ export function DDashboard() {
           <h2 className="text-lg font-semibold">My Profile</h2>
         </div>
 
-        {/* My Appointments card */}
+        {/* Appointments */}
         <div
           onClick={() => navigate("appointments")}
           className="bg-blue-200 p-6 rounded-lg shadow text-center cursor-pointer hover:shadow-lg transition"
@@ -148,26 +194,59 @@ export function DDashboard() {
 
 /* PROFILE PAGE */
 export function DProfile() {
-  const [edit, setEdit] = useState(false);
-
   const [doctor, setDoctor] = useState({
-    name: "Dr. John Smith",
-    specialization: "Cardiologist",
-    fees: "500",
-    contact: "+91 9876543210",
-    email: "johnsmith@email.com",
-    password: "12345678",
+    name: "Loading...",
+    specialization: "Loading...",
+    fees: "Loading...",
+    contact: "Loading...",
+    email: "Loading...",
+    password: "Loading...",
     image:
       "https://plus.unsplash.com/premium_photo-1664476459351-59625a0fef11?q=80&w=687&auto=format&fit=crop",
   });
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setDoctor({ ...doctor, image: imageUrl });
-    }
-  };
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        const email =
+          user?.email ||
+          user?.Email ||
+          localStorage.getItem("userEmail");
+
+        if (!email) {
+          console.log("No email found");
+          return;
+        }
+
+        const res = await axios.get(
+          'https://localhost:7077/api/AddDoctors'
+
+        );
+
+        const data = res.data;
+
+        setDoctor({
+          name: data.name || data.doctorName || data.DoctorName,
+          specialization: data.specialization || data.Specialization,
+          fees: data.fees || data.Fees,
+          contact: data.contact || data.phone || data.Contact,
+          email: data.email || data.Email,
+          password: data.password || data.Password,
+          image:
+            data.image ||
+            data.Image ||
+            "https://plus.unsplash.com/premium_photo-1664476459351-59625a0fef11?q=80&w=687&auto=format&fit=crop",
+        });
+
+      } catch (err) {
+        console.error("Error fetching doctor:", err);
+      }
+    };
+
+    fetchDoctor();
+  }, []);
 
   return (
     <>
@@ -187,73 +266,23 @@ export function DProfile() {
             />
           </div>
 
-          {/* Upload Image */}
-          {edit && (
-            <div className="mt-4 text-center">
-              <input type="file" onChange={handleImageUpload} />
-            </div>
-          )}
-
           {/* Name */}
           <div className="text-center mt-4">
-            {edit ? (
-              <input
-                value={doctor.name}
-                onChange={(e) => setDoctor({ ...doctor, name: e.target.value })}
-                className="border p-2 rounded w-full"
-              />
-            ) : (
-              <h3 className="text-2xl font-bold text-gray-800">{doctor.name}</h3>
-            )}
+            <h3 className="text-2xl font-bold text-gray-800">
+              {doctor.name}
+            </h3>
           </div>
 
           {/* Info Cards */}
           <div className="grid md:grid-cols-2 gap-4 mt-6">
 
-            <InfoField
-              label="Specialization"
-              value={doctor.specialization}
-              edit={edit}
-              onChange={(val) => setDoctor({ ...doctor, specialization: val })}
-            />
-
-            <InfoField
-              label="Fees"
-              value={doctor.fees}
-              edit={edit}
-              onChange={(val) => setDoctor({ ...doctor, fees: val })}
-            />
-
-            <InfoField
-              label="Contact"
-              value={doctor.contact}
-              edit={edit}
-              onChange={(val) => setDoctor({ ...doctor, contact: val })}
-            />
-
-            <InfoField
-              label="Email"
-              value={doctor.email}
-              edit={edit}
-              onChange={(val) => setDoctor({ ...doctor, email: val })}
-            />
-
-            <InfoField
-              label="Password"
-              value={doctor.password}
-              edit={edit}
-              onChange={(val) => setDoctor({ ...doctor, password: val })}
-            />
+            <InfoField label="Specialization" value={doctor.specialization} />
+            <InfoField label="Fees" value={doctor.fees} />
+            <InfoField label="Contact" value={doctor.contact} />
+            <InfoField label="Email" value={doctor.email} />
+            <InfoField label="Password" value={doctor.password} />
 
           </div>
-
-          {/* Button */}
-          <button
-            onClick={() => setEdit(!edit)}
-            className="mt-6 w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600"
-          >
-            {edit ? "Save Profile" : "Edit Profile"}
-          </button>
 
         </div>
       </div>
@@ -261,20 +290,11 @@ export function DProfile() {
   );
 }
 
-/* Reusable Field */
-function InfoField({ label, value, edit, onChange }) {
+function InfoField({ label, value }) {
   return (
     <div className="bg-blue-50 p-4 rounded-xl shadow">
       <p className="text-gray-500 text-sm">{label}</p>
-      {edit ? (
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full border p-2 rounded mt-1"
-        />
-      ) : (
-        <p className="font-semibold">{value}</p>
-      )}
+      <p className="font-semibold">{value}</p>
     </div>
   );
 }

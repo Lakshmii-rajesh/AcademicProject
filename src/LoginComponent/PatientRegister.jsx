@@ -13,7 +13,7 @@ function PatientRegister() {
     try {
       // Call backend register API
       const res = await registerPatient(data);
-      alert(res.message); // Shows "Register successfully" from backend
+      alert("Registration completed"); // Shows "Register successfully" from backend
       navigate("/patient-login"); // Redirect to login page
     } catch (err) {
       alert(err); // Shows backend error (like "Email already exists")

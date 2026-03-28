@@ -37,3 +37,17 @@ export const forgetPasswordPatient = async (data) => {
     throw error.response?.data || error.message;
   }
 };
+const doctorBaseURL = "https://localhost:7077/api/AddDoctors";
+
+// Get doctor profile by email
+export const getDoctorProfile = async (email) => {
+  try {
+    const response = await axios.get(`${doctorBaseURL}`);
+    
+    const doctor = response.data.find(d => d.email === email);
+
+    return doctor;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};

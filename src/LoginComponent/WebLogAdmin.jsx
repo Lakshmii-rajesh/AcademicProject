@@ -8,38 +8,88 @@ function WebLogAdmin() {
   const [forgot, setForgot] = useState(false);
   const navigate = useNavigate();
 
-  const onSubmit = (data) => {
-    if (forgot) { 
+  const onSubmit = async (data) => {
+    if (forgot) {
       console.log('forgot data', data);
       alert('If an account exists we have sent reset instructions.');
     } else {
-      console.log("login data", data);
+      try {
+        const response = await fetch("https://localhost:7077/api/Auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password
+          })
+        });
 
-      // login success
-      alert("Logged in successfully");
+        const result = await response.json();
 
-      // navigate to admin dashboard
-      navigate("/admin-dashboard");
+        if (!response.ok) {
+          alert(result || "Login failed");
+          return;
+        }
+
+        console.log("API Response:", result);
+
+        // ✅ STORE TOKEN
+        localStorage.setItem("token", result.token);
+
+        // ✅ STORE USER (optional but useful)
+        localStorage.setItem("user", JSON.stringify(result.user));
+
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        console.log(user)
+
+        // success
+        alert("Logged in successfully");
+
+        
+
+        // navigate
+        const role = user?.role?.toLowerCase();
+
+        console.log(role)
+
+        console.log(user.role?.toLowerCase())
+
+        if (role === "admin") {
+          navigate("/admin-dashboard");
+        } else if (role === "doctor") {
+          navigate("/Doctor-dashboard");
+        } else if (role === "patient") {
+          navigate("/patient-dashboard");
+        } else {
+          navigate("/"); // fallback
+        }
+
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Invalid Username or password");
+      }
     }
   };
 
   return (
-    <div 
+    <div
       className="h-screen pl-20 w-full flex justify-start items-center bg-cover bg-center"
       style={{ backgroundImage: "url('LoginForm.jpeg')" }}
     >
 
       <div className="absolute inset-0 bg-black/40"></div>
 
-      <form 
-        onSubmit={handleSubmit(onSubmit)} 
+      <form
+        onSubmit={handleSubmit(onSubmit)}
         className="relative z-10 w-[90%] sm:w-100"
       >
         <div className="w-full max-w-md rounded-3xl p-6 bg-white/30 backdrop-blur-xl shadow-2xl border border-white/40">
 
-          <img 
-            src="public\project Logo.png" 
-            className="h-20 w-20 rounded-full object-cover mx-auto mb-6" 
+          <img
+            src="public\project Logo.png"
+            className="h-20 w-20 rounded-full object-cover mx-auto mb-6"
             alt="logo"
           />
 
@@ -80,8 +130,8 @@ function WebLogAdmin() {
               <p className="text-red-400 text-sm">{errors.password?.message}</p>
 
               <div className="flex flex-col gap-3 mt-6">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="w-full bg-blue-500 hover:bg-blue-600 
                              text-white py-3 rounded-lg transition duration-300 cursor-pointer">
                   Reset Password
@@ -132,7 +182,7 @@ function WebLogAdmin() {
               <p className="text-red-400 text-sm">{errors.password?.message}</p>
 
               <div className="flex justify-between text-sm text-white mt-2">
-                <span 
+                <span
                   className="cursor-pointer underline"
                   onClick={() => setForgot(true)}
                 >
@@ -141,8 +191,8 @@ function WebLogAdmin() {
               </div>
 
               <div className="flex flex-col gap-3 mt-6">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="w-full bg-blue-500 hover:bg-blue-600 cursor-pointer
                              text-white py-3 rounded-lg transition duration-300">
                   Login
@@ -151,12 +201,12 @@ function WebLogAdmin() {
             </>
           )}
 
-          <button 
+          <button
             type="button"
-            onClick={() => navigate("/")} 
+            onClick={() => navigate("/")}
             className="mt-4 block mx-auto text-black cursor-pointer"
           >
-             ← Back
+            ← Back
           </button>
 
         </div>

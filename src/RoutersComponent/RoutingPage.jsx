@@ -6,10 +6,8 @@ import HomePage2 from "../HomePageComponent/HomePage2";
 import HomePage1 from "../HomePageComponent/HomePage1";
 import AboutUs from "../HomePageComponent/AboutUs";
 import CombinedHome from "../HomePageComponent/CombinedHome";
+import ProtectedRoute from "./ProtectedRoute";
 
-
-import WebLogPatient from "../LoginComponent/WebLogPatient";
-import WebLogDoctor from "../LoginComponent/WebLogDoctor";
 import WebLogAdmin from "../LoginComponent/WebLogAdmin";
 import PatientRegister from "../LoginComponent/PatientRegister";
 
@@ -57,7 +55,7 @@ function RoutingPage() {
   return (
     <div>
       <Routes>
-        <Route path="/aboutus" element={<AboutUs/>} />
+        <Route path="/aboutus" element={<AboutUs />} />
         <Route path="/aboutus" element={<AboutUs />} />
         <Route path="/login" element={<HomePage2 />} />
         <Route path="/register" element={<HomePage2 />} />
@@ -66,17 +64,24 @@ function RoutingPage() {
         <Route path="/home-page" element={<CombinedHome />} />
         <Route path="/" element={<CombinedHome />} />
 
-        <Route path="/patient-login" element={<WebLogPatient />} />
+        <Route path="/patient-login" element={<WebLogAdmin />} />
         <Route path="/patient-register" element={<PatientRegister />} />
 
-        <Route path="/doctor-login" element={<WebLogDoctor />} />
+        <Route path="/doctor-login" element={<WebLogAdmin />} />
         <Route path="/admin-login" element={<WebLogAdmin />} />
 
         <Route path="/Home-Page1" element={<HomePage1 />} />
         <Route path="/admin" element={<AdminDashBoard />} />
         <Route path="/add-doctor" element={<AddDoctor />} />
 
-        <Route path="/admin-dashboard" element={<AdminDashBoard />}>
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashBoard />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<ADashboard />} />
           <Route path="users" element={<ManageUsers />} />
           <Route path="doctors" element={<ManageDoctors />} />
@@ -85,7 +90,14 @@ function RoutingPage() {
         </Route>
 
         {/* ================= PATIENT DASHBOARD ROUTES ================= */}
-        <Route path="/patient-dashboard" element={<PatientDashboard />}>
+        <Route
+          path="/patient-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["patient"]}>
+              <PatientDashboard />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<PDashboard />} />
 
           <Route
@@ -113,7 +125,14 @@ function RoutingPage() {
         </Route>
 
         {/* ================= DOCTOR DASHBOARD ROUTES ================= */}
-        <Route path="/Doctor-dashboard" element={<DoctorDashboard />}>
+        <Route
+          path="/Doctor-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["doctor"]}>
+              <DoctorDashboard />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<DDashboard />} />
           <Route path="profile" element={<DProfile />} />
           <Route path="appointments" element={<Appointments />} />
