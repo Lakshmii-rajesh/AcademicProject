@@ -5,7 +5,7 @@ import { IoPerson } from "react-icons/io5";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { ImCross } from "react-icons/im";
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
-
+import axios from "axios";
 // MAIN DOCTOR DASHBOARD COMPONENT
 export default function DoctorDashboard() {
   const [isOpen, setIsOpen] = useState(false); // controls sidebar open/close
@@ -205,49 +205,47 @@ export function DProfile() {
       "https://plus.unsplash.com/premium_photo-1664476459351-59625a0fef11?q=80&w=687&auto=format&fit=crop",
   });
 
-  useEffect(() => {
-    const fetchDoctor = async () => {
-      try {
-        const user = JSON.parse(localStorage.getItem("user"));
+useEffect(() => {
+  const fetchDoctor = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-        const email =
-          user?.email ||
-          user?.Email ||
-          localStorage.getItem("userEmail");
+      const email =
+        user.email ||
+        user.Email ||
+        localStorage.getItem("userEmail");
 
-        if (!email) {
-          console.log("No email found");
-          return;
-        }
+      console.log("EMAIL:", email);
 
-        const res = await axios.get(
-          'https://localhost:7077/api/AddDoctors'
-
-        );
-
-        const data = res.data;
-
-        setDoctor({
-          name: data.name || data.doctorName || data.DoctorName,
-          specialization: data.specialization || data.Specialization,
-          fees: data.fees || data.Fees,
-          contact: data.contact || data.phone || data.Contact,
-          email: data.email || data.Email,
-          password: data.password || data.Password,
-          image:
-            data.image ||
-            data.Image ||
-            "https://plus.unsplash.com/premium_photo-1664476459351-59625a0fef11?q=80&w=687&auto=format&fit=crop",
-        });
-
-      } catch (err) {
-        console.error("Error fetching doctor:", err);
+      if (!email) {
+        console.log("No email found in localStorage");
+        return;
       }
-    };
 
-    fetchDoctor();
-  }, []);
+      const res = await axios.get(
+        `https://localhost:7077/api/AddDoctors/DoctorByEmail/${email}`
+      );
 
+      console.log("API RESPONSE:", res.data);
+
+      const data = res.data;
+
+      setDoctor({
+        name: data.doctorName || data.DoctorName,
+        specialization: data.specialization || data.Specialization,
+        fees: data.fee || data.Fee,
+        contact: data.contact || data.Contact,
+        email: data.email || data.Email,
+        image: data.image || data.Image,
+      });
+
+    } catch (err) {
+      console.error("API ERROR:", err);
+    }
+  };
+
+  fetchDoctor();
+}, []);
   return (
     <>
       <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border">
@@ -280,7 +278,7 @@ export function DProfile() {
             <InfoField label="Fees" value={doctor.fees} />
             <InfoField label="Contact" value={doctor.contact} />
             <InfoField label="Email" value={doctor.email} />
-            <InfoField label="Password" value={doctor.password} />
+           
 
           </div>
 
@@ -303,211 +301,180 @@ function InfoField({ label, value }) {
 
 import { FaSearch, FaTrash } from "react-icons/fa";
 
+
+
+
 export function Appointments() {
   const [appointments, setAppointments] = useState([]);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
 
   const itemsPerPage = 4;
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("appointments")) || [];
-    setAppointments(data);
+    fetchAppointments();
   }, []);
 
-  const updateStatus = (index, status) => {
-    const updated = [...appointments];
-    updated[index].status = status;
-    setAppointments(updated);
-    localStorage.setItem("appointments", JSON.stringify(updated));
+  // FETCH APPOINTMENTS
+  const fetchAppointments = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      const email =
+        user?.email || localStorage.getItem("userEmail");
+
+      const url = `https://localhost:7077/api/BookAppointment/GetByDoctorSpecialization/${encodeURIComponent(email)}`;
+
+      const res = await axios.get(url);
+
+      let data = [];
+
+      if (Array.isArray(res.data)) {
+        data = res.data;
+      } else if (res.data?.$values) {
+        data = res.data.$values;
+      } else if (res.data?.data) {
+        data = res.data.data;
+      }
+
+      setAppointments(data || []);
+    } catch (err) {
+      console.error("FETCH ERROR:", err);
+      setAppointments([]);
+    }
   };
 
-  const deleteAppointment = (index) => {
-    const updated = appointments.filter((_, i) => i !== index);
-    setAppointments(updated);
-    localStorage.setItem("appointments", JSON.stringify(updated));
-  };
+  // STATUS UPDATE (UPDATED ONLY)
+const updateStatus = (id, status) => {
+  setAppointments((prev) =>
+    prev.map((a) =>
+      a.id === id
+        ? {
+            ...a,
+            status: status === "Rejected" ? "Rejected" : "Accepted",
+          }
+        : a
+    ).filter((a) => a.status !== "Rejected") // remove rejected
+  );
+};
 
-  const filteredAppointments = appointments.filter((a) => {
-    const matchesSearch = a.patientName?.toLowerCase().includes(search.toLowerCase());
+  // SEARCH
+  const filteredAppointments = appointments.filter((a) =>
+    (a?.patientName || "")
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
-    const matchesFilter =
-      filter === "All"
-        ? true
-        : filter === "Pending"
-        ? !a.status
-        : a.status === filter;
-
-    return matchesSearch && matchesFilter;
-  });
-
+  // PAGINATION
   const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+
   const start = (currentPage - 1) * itemsPerPage;
-  const currentAppointments = filteredAppointments.slice(start, start + itemsPerPage);
+
+  const currentAppointments = filteredAppointments.slice(
+    start,
+    start + itemsPerPage
+  );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen font-sans">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Appointments</h1>
-            <p className="text-gray-500 mt-1">Manage and view all patient appointments</p>
-          </div>
-        </div>
+        <h1 className="text-3xl font-bold mb-6">
+          Appointments
+        </h1>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <input
+          type="text"
+          placeholder="Search patient..."
+          className="w-full md:w-80 px-4 py-2 border rounded-lg mb-6"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-          {/* Filter + Search */}
-          <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <table className="w-full text-left">
 
-            <div className="flex gap-2 flex-wrap">
-              {["All", "Approved", "Rejected", "Pending"].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    filter === f
-                      ? "bg-blue-100 text-blue-600 border border-blue-200"
-                      : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
+            <thead className="bg-gray-100 text-sm">
+              <tr>
+                <th className="p-3">Patient</th>
+                <th className="p-3">Contact</th>
+                <th className="p-3">Reason</th>
+                <th className="p-3">City</th>
+                <th className="p-3">Date</th>
+                <th className="p-3">Time</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 text-center">Action</th>
+              </tr>
+            </thead>
 
-            <div className="relative w-full sm:w-80">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search patient..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none text-sm"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
+            <tbody>
+              {currentAppointments.length > 0 ? (
+                currentAppointments.map((a, index) => (
+                  <tr key={a.id || index} className="border-t hover:bg-gray-50">
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b text-gray-500 text-xs uppercase">
-                  <th className="px-6 py-4">Patient</th>
-                  <th className="px-6 py-4">Contact</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4">Time</th>
-                  <th className="px-6 py-4">City</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-center">Action</th>
-                </tr>
-              </thead>
+                    <td className="p-3 font-medium">{a.patientName || "-"}</td>
+                    <td className="p-3">{a.contactNumber || "-"}</td>
+                    <td className="p-3">{a.reason || "-"}</td>
+                    <td className="p-3">{a.city || "-"}</td>
 
-              <tbody>
-                {currentAppointments.length > 0 ? (
-                  currentAppointments.map((a, i) => (
-                    <tr key={i} className="hover:bg-gray-50 border-b">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={a.image || "https://randomuser.me/api/portraits/men/32.jpg"}
-                            alt="patient"
-                            className="w-10 h-10 rounded-full object-cover border"
-                          />
-                          <p className="font-semibold text-gray-800">{a.patientName}</p>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4">{a.contact}</td>
-                      <td className="px-6 py-4">{a.date}</td>
-                      <td className="px-6 py-4">{a.time}</td>
-                      <td className="px-6 py-4">{a.city}</td>
-
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            a.status === "Approved"
-                              ? "bg-green-100 text-green-700"
-                              : a.status === "Rejected"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {a.status ? a.status : "Pending"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => updateStatus(start + i, "Approved")}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm"
-                          >
-                            Approve
-                          </button>
-
-                          <button
-                            onClick={() => updateStatus(start + i, "Rejected")}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm"
-                          >
-                            Reject
-                          </button>
-
-                          <button
-                            onClick={() => deleteAppointment(start + i)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="px-6 py-10 text-center text-gray-500">
-                      No appointments found
+                    <td className="p-3">
+                      {a.appointmentDate
+                        ? a.appointmentDate.split("T")[0]
+                        : "-"}
                     </td>
+
+                    <td className="p-3">{a.timeSlot || "-"}</td>
+
+                    {/* STATUS */}
+                    <td className="p-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold
+                        ${a.status === "Accepted"
+                            ? "bg-green-100 text-green-700"
+                            : a.status === "Rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {a.status || "Pending"}
+                      </span>
+                    </td>
+
+                    {/* ACTION */}
+                    <td className="p-3">
+                      <div className="flex gap-2 justify-center">
+
+                        <button
+                          onClick={() => updateStatus(a.id, "Accepted")}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Accept
+                        </button>
+
+                        <button
+                          onClick={() => updateStatus(a.id, "Rejected")}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Reject
+                        </button>
+
+                      </div>
+                    </td>
+
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="p-6 text-center text-gray-500">
+                    No appointments found
+                  </td>
+                </tr>
+              )}
+            </tbody>
 
-          {/* Pagination */}
-          <div className="p-4 border-t border-gray-100 flex justify-center gap-2">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 rounded-lg border bg-white disabled:opacity-50"
-            >
-              Prev
-            </button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded-lg ${
-                  currentPage === page ? "bg-blue-500 text-white" : "bg-gray-100"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded-lg border bg-white disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-
+          </table>
         </div>
+
       </div>
     </div>
   );

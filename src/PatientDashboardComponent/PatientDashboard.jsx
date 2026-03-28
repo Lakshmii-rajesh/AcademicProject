@@ -348,53 +348,67 @@ export function BookAppointment() {
   }, [treatment, doctors]);
 
   // ================= BOOK APPOINTMENT =================
-  const handleBook = async () => {
-    if (
-      !patientName ||
-      !contact ||
-      !doctor ||
-      !treatment ||
-      !date ||
-      !time ||
-      !city
-    ) {
-      alert("Please fill all fields");
-      return;
-    }
+const handleBook = async () => {
+  if (
+    !patientName ||
+    !contact ||
+    !doctor ||
+    !treatment ||
+    !date ||
+    !time ||
+    !city
+  ) {
+    alert("Please fill all fields");
+    return;
+  }
 
-    const newAppointment = {
-      patientName,
-      contactNumber: contact,
-      doctorName: doctor,
-      reason: treatment,
-      appointmentDate: date,
-      timeSlot: time,
-      city,
-    };
+  // ✅ GET USER FROM LOCAL STORAGE
+  const user = JSON.parse(localStorage.getItem("user"));
 
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/BookAppointment/BookAppointment`,
-        newAppointment
-      );
+  console.log("User:", user); // 🔍 DEBUG
 
-      alert("Appointment booked successfully");
+  if (!user || !user.email) {
+    alert("User not logged in properly");
+    return;
+  }
 
-      setAppointments([...appointments, response.data]);
+  // ✅ ADD EMAIL HERE
+ const newAppointment = {
+  patientName: patientName,      // ✅ from input
+  contactNumber: contact,
+  doctorName: doctor,
+  reason: treatment,
+  appointmentDate: date,
+  timeSlot: time,
+  city,
+  email: JSON.parse(localStorage.getItem("user"))?.email || ""  // ✅ REQUIRED
+};
 
-      // ================= RESET FORM =================
-      setPatientName("");
-      setContact("");
-      setTreatment("");
-      setDoctor("");
-      setCity("");
-      setDate("");
-      setTime("");
-    } catch (error) {
-      console.error(error);
-      alert("Error saving appointment");
-    }
-  };
+  console.log("Sending Data:", newAppointment); // 🔍 DEBUG
+
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/BookAppointment/BookAppointment`,
+      newAppointment
+    );
+
+    alert("Appointment booked successfully");
+
+    setAppointments([...appointments, response.data]);
+
+    // RESET FORM
+    setPatientName("");
+    setContact("");
+    setTreatment("");
+    setDoctor("");
+    setCity("");
+    setDate("");
+    setTime("");
+  } catch (error) {
+    console.error(error);
+    alert("Error saving appointment");
+  }
+};
 
   // ================= FILTER DOCTORS =================
   const filteredDoctors = doctors.filter(
