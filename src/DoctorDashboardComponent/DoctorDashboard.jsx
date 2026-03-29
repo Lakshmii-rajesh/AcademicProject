@@ -346,6 +346,8 @@ export function Appointments() {
 
   // STATUS UPDATE (UPDATED ONLY)
 const updateStatus = (id, status) => {
+  const appointment = appointments.find((a) => a.id === id);
+
   setAppointments((prev) =>
     prev.map((a) =>
       a.id === id
@@ -354,10 +356,61 @@ const updateStatus = (id, status) => {
             status: status === "Rejected" ? "Rejected" : "Accepted",
           }
         : a
-    ).filter((a) => a.status !== "Rejected") // remove rejected
+    )
   );
-};
 
+  // ACCEPT → only WhatsApp (unchanged)
+  if (status === "Accepted" && appointment) {
+    let message = `Hello,
+
+Your appointment is CONFIRMED ✅
+
+Patient: ${appointment.patientName}
+Reason: ${appointment.reason}
+Date: ${appointment.appointmentDate?.split("T")[0]}
+Time: ${appointment.timeSlot}
+
+Thank you.`;
+
+    window.open(
+      `https://wa.me/91${appointment.contactNumber}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
+  }
+
+  // ❌ REJECT → DELETE API + WhatsApp
+  if (status === "Rejected" && appointment) {
+    axios
+      .delete(
+        `https://localhost:7077/api/BookAppointment/DeleteAppointment?id=${id}`
+      )
+      .then(() => {
+        setAppointments((prev) =>
+          prev.filter((a) => a.id !== id)
+        );
+
+        let message = `Hello,
+
+Your appointment has been CANCELLED ❌
+
+Patient: ${appointment.patientName}
+Reason: ${appointment.reason}
+Date: ${appointment.appointmentDate?.split("T")[0]}
+Time: ${appointment.timeSlot}
+
+Sorry for the inconvenience. Please reschedule.`;
+
+        window.open(
+          `https://wa.me/91${appointment.contactNumber}?text=${encodeURIComponent(message)}`,
+          "_blank"
+        );
+      })
+      .catch((err) => {
+        console.error("DELETE ERROR:", err);
+        alert("Failed to reject appointment");
+      });
+  }
+};
   // SEARCH
   const filteredAppointments = appointments.filter((a) =>
     (a?.patientName || "")

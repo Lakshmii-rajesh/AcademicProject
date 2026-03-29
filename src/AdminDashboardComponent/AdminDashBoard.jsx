@@ -225,7 +225,6 @@ export function ManageDoctors() {
 
 // ================= Appointments =================
 
-
 export function AppointmentHistory() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -239,7 +238,6 @@ export function AppointmentHistory() {
         "https://localhost:7077/api/BookAppointment/GetAppointments"
       );
 
-      // Normalize ID
       const data = res.data.map((appt) => ({
         ...appt,
         id: appt.Id || appt.id,
@@ -247,6 +245,7 @@ export function AppointmentHistory() {
         DoctorName: appt.doctorName || "-",
         Specialization: appt.Specialization || "-",
         Email: appt.Email || appt.email || "-",
+        phone: appt.phone || appt.Phone || appt.contact || ""
       }));
 
       setAppointments(data);
@@ -262,27 +261,7 @@ export function AppointmentHistory() {
     fetchAppointments();
   }, []);
 
-  // Delete appointment
-  const handleDelete = async (id) => {
-    if (!id) return alert("Invalid appointment ID");
-
-    if (!window.confirm("Are you sure you want to delete this appointment?"))
-      return;
-
-    try {
-      await axios.delete(
-        `https://localhost:7077/api/BookAppointment/DeleteAppointment?id=${id}`
-      );
-
-      // Remove from UI
-      setAppointments((prev) => prev.filter((a) => a.id !== id));
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete appointment. Try again later.");
-    }
-  };
-
-  // Filter appointments
+  // Filter
   const filteredAppointments = appointments.filter(
     (appt) =>
       appt.PatientName.toLowerCase().includes(search.toLowerCase()) ||
@@ -325,44 +304,28 @@ export function AppointmentHistory() {
           <table className="min-w-full border border-gray-300">
             <thead className="bg-blue-400 text-white">
               <tr>
-               
                 <th className="px-4 py-2 border">Email</th>
-                
-              
                 <th className="px-4 py-2 border">Appointment Date</th>
                 <th className="px-4 py-2 border">Time Slot</th>
-                <th className="px-4 py-2 border">Login Date</th>
-                <th className="px-4 py-2 border">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredAppointments.map((appt) => (
                 <tr
                   key={appt.id}
                   className="text-center hover:bg-gray-100 transition-colors duration-200"
                 >
-                 
                   <td className="px-4 py-2 border">{appt.Email}</td>
-                 
-                  
+
                   <td className="px-4 py-2 border">
                     {appt.appointmentDate
                       ? new Date(appt.appointmentDate).toLocaleDateString()
                       : "-"}
                   </td>
-                  <td className="px-4 py-2 border">{appt.timeSlot || "-"}</td>
+
                   <td className="px-4 py-2 border">
-                    {appt.loginDT
-                      ? new Date(appt.loginDT).toLocaleString()
-                      : "-"}
-                  </td>
-                  <td className="px-4 py-2 border">
-                    <button
-                      onClick={() => handleDelete(appt.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
+                    {appt.timeSlot || "-"}
                   </td>
                 </tr>
               ))}
@@ -370,7 +333,9 @@ export function AppointmentHistory() {
           </table>
         </div>
       ) : (
-        !loading && <p className="text-gray-500 mt-4">No appointments found.</p>
+        !loading && (
+          <p className="text-gray-500 mt-4">No appointments found.</p>
+        )
       )}
     </div>
   );

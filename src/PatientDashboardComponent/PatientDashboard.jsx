@@ -362,41 +362,46 @@ const handleBook = async () => {
     return;
   }
 
-  // ✅ GET USER FROM LOCAL STORAGE
   const user = JSON.parse(localStorage.getItem("user"));
-
-  console.log("User:", user); // 🔍 DEBUG
 
   if (!user || !user.email) {
     alert("User not logged in properly");
     return;
   }
 
-  // ✅ ADD EMAIL HERE
  const newAppointment = {
-  patientName: patientName,      // ✅ from input
+  patientName,
   contactNumber: contact,
   doctorName: doctor,
   reason: treatment,
+  Specialization: treatment,   // ✅ ADD THIS LINE ONLY
   appointmentDate: date,
   timeSlot: time,
   city,
-  email: JSON.parse(localStorage.getItem("user"))?.email || ""  // ✅ REQUIRED
+  email: user.email,
 };
-
-  console.log("Sending Data:", newAppointment); // 🔍 DEBUG
+  console.log("Sending Data:", newAppointment);
 
   try {
-    const response = await axios.post(
+    await axios.post(
       `${BASE_URL}/BookAppointment/BookAppointment`,
       newAppointment
     );
 
     alert("Appointment booked successfully");
 
-    setAppointments([...appointments, response.data]);
+    // ❌ REMOVE THIS (because API returns string)
+    // setAppointments([...appointments, response.data]);
 
-    // RESET FORM
+    setAppointments((prev) => [
+      ...prev,
+      {
+        ...newAppointment,
+        status: "Pending",
+      },
+    ]);
+
+    // RESET
     setPatientName("");
     setContact("");
     setTreatment("");
@@ -405,8 +410,10 @@ const handleBook = async () => {
     setDate("");
     setTime("");
   } catch (error) {
-    console.error(error);
-    alert("Error saving appointment");
+    console.error("API ERROR:", error?.response?.data || error.message);
+    alert(
+      error?.response?.data || "Error saving appointment (check backend)"
+    );
   }
 };
 
