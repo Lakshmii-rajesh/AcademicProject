@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Images = {
   All: [
@@ -70,15 +71,35 @@ const HomePageGallery = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-        {Images[selectedCategory].map((imgSrc, index) => (
+<motion.div 
+        layout
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+      >
+        <AnimatePresence mode='popLayout'>
+          {Images[selectedCategory].map((imgSrc, index) => (
+            <motion.div
+              layout
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.5, delay: index * 0.05 }}
+              key={`${selectedCategory}-${index}`}
+              className="relative group h-72 rounded-[2rem] overflow-hidden bg-slate-100 border-none shadow-lg shadow-slate-200/50 cursor-zoom-in"
+            >
           <img
             key={index}
             src={imgSrc}
             className=" cursor-pointer h-64 w-full sm:w-72 md:w-80 lg:w-96 rounded-lg object-cover transition-all hover:-translate-y-1 hover:scale-110"
           />
-        ))}
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
+                 <p className="text-white text-[10px] font-black uppercase tracking-[0.3em] translate-y-4 group-hover:translate-y-0 transition-transform duration-500">Facility: {selectedCategory}</p>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
+      
+      
     </div>
   );
   ``
