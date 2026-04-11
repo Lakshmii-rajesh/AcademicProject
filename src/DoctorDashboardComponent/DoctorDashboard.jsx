@@ -1,24 +1,38 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaBars, FaHome, FaFileAlt } from "react-icons/fa";
+import { FaBars, FaHome, FaFileAlt, FaUserMd } from "react-icons/fa";
 import { FaUserDoctor, FaClipboardList } from "react-icons/fa6";
 import { IoPerson } from "react-icons/io5";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { ImCross } from "react-icons/im";
-import { NavLink, useNavigate, Outlet } from "react-router-dom";
+import { NavLink, useNavigate, Outlet, useLocation } from "react-router-dom";
 import axios from "axios";
-// MAIN DOCTOR DASHBOARD COMPONENT
-export default function DoctorDashboard() {
-  const [isOpen, setIsOpen] = useState(false); // controls sidebar open/close
-  const [open, setOpen] = useState(false); // controls profile dropdown
-  const dropdownRef = useRef(null); // reference for clicking outside
-  const navigate = useNavigate();
+import { motion, AnimatePresence } from "framer-motion";
+import { Toaster, toast } from "react-hot-toast";
+import { useSpring, animated } from "@react-spring/web";
 
-  // Navigate to default dashboard page when component mounts
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
+import DoctorSidebar from "./DoctorSidebar";
+import { FiLogOut } from "react-icons/fi";
+
+export default function DoctorDashboard() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const dropdownRef = useRef(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+
+  const location = useLocation();
+
   useEffect(() => {
-    navigate(".", { replace: true });
+    setTimeout(() => setLoading(false), 1200);
   }, []);
 
-  // Close profile dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -30,90 +44,87 @@ export default function DoctorDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <motion.div
+      className="min-h-screen bg-[#f3f4f6] flex flex-col overflow-x-hidden"
+    >
+      <Toaster position="top-right" />
 
-      {/* NAVBAR */}
-      <div className="bg-blue-300 flex justify-between items-center px-6 py-4 shadow relative">
-        {/* Hamburger button for sidebar */}
-        {!isOpen && (
-          <button className="text-3xl" onClick={() => setIsOpen(true)}>
-            <FaBars />
-          </button>
-        )}
-
-        {/* Profile dropdown */}
-        <div className="relative" ref={dropdownRef}>
+      {/* ✅ NAVBAR */}
+      <div className="bg-blue-500 flex justify-end items-center px-6 h-16 shadow-sm sticky top-0 z-50">
+        <div ref={dropdownRef} className="relative">
           <div
-            className="flex items-center gap-2 cursor-pointer"
             onClick={() => setOpen(!open)}
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center cursor-pointer shadow"
           >
-            <IoPerson size={35} color="blue" />
-            <p className="text-lg font-semibold">Doctor</p>
-            <RiArrowDropDownLine size={35} />
+            <IoPerson className="text-blue-600 text-xl" />
           </div>
 
-          {/* Dropdown menu */}
-          {open && (
-            <div className="absolute right-0 mt-2 w-24 bg-white border rounded shadow-md">
-              <button
-                className="w-full text-left px-4 py-2 hover:bg-blue-200"
-                onClick={() => (window.location.href = "/")}
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute right-0 mt-3 w-44 bg-white rounded-lg shadow-lg p-2 z-50"
               >
-                Logout
-              </button>
-            </div>
-          )}
+                <button
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded"
+                  onClick={() => {
+                    toast.success("Logged out 👋");
+                    setTimeout(() => (window.location.href = "/"), 1000);
+                  }}
+                >
+                  <FiLogOut />
+                  Sign out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* SIDEBAR */}
-      <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-40 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* Sidebar header */}
-        <div className="flex justify-between items-center px-4 py-4 border-b">
-          <p className="text-xl font-bold">CUREONIX</p>
-          <button onClick={() => setIsOpen(false)}>
-            <ImCross />
-          </button>
-        </div>
+      {/* ✅ MAIN CONTENT AREA */}
+      <div className="flex flex-1">
+        {/* SIDEBAR */}
+        <DoctorSidebar
+          isCollapsed={sidebarCollapsed}
+          toggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+        />
 
-        {/* Sidebar navigation links */}
-        <nav className="space-y-1 mt-2">
-          <SidebarItem to="." icon={<FaHome />} label="Dashboard" />
-          <SidebarItem to="appointments" icon={<FaFileAlt />} label="Appointments" />
-        </nav>
+        {/* PAGE CONTENT */}
+        <main className="flex-1 transition-all duration-300 p-8 min-h-[calc(100vh-64px)] overflow-y-auto">
+          <Outlet />
+        </main>
       </div>
+    </motion.div>
+  );
+}
 
-      {/* MAIN CONTENT */}
-      <div className={`p-6 transition-all duration-300 ${isOpen ? "ml-64" : ""}`}>
-        <Outlet /> {/* Nested routes will render here */}
-      </div>
+/* NOTE FOR GRAPHS: 
+  Inside your child components (DDashboard, etc.), 
+  wrap your AreaChart/ResponsiveContainer in a div with a set height:
+  
+  <div className="h-[300px] w-full bg-white p-4 rounded-[2.5rem] shadow-sm">
+     <ResponsiveContainer width="100%" height="100%">
+        <AreaChart ... />
+     </ResponsiveContainer>
+  </div>
+*/
+/* LOADER */
+function SkeletonLoader() {
+  return (
+    <div className="grid gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div
+          key={i}
+          className="h-24 rounded-xl bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse"
+        />
+      ))}
     </div>
   );
 }
 
-/* SIDEBAR ITEM COMPONENT */
-function SidebarItem({ to, icon, label }) {
-  return (
-    <NavLink
-      to={to}
-      end
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-2 rounded hover:text-blue-600 ${
-          isActive ? "text-blue-600 font-semibold" : "text-gray-700"
-        }`
-      }
-    >
-      {icon}
-      {label}
-    </NavLink>
-  );
-}
 
-/* DOCTOR DASHBOARD PAGE (HOME) */
 export function DDashboard() {
   const navigate = useNavigate();
 
@@ -128,66 +139,71 @@ export function DDashboard() {
       try {
         const user = JSON.parse(localStorage.getItem("user"));
         const email = user?.email;
-
-        if (!email) {
-          console.log("No email found");
-          return;
-        }
+        if (!email) return;
 
         const res = await axios.get(
           `https://localhost:7077/api/AddDoctors/DoctorByEmail/${email}`
         );
-
         const data = res.data;
-
         setDoctor({
           name: data.name || data.doctorName,
           email: data.email,
           specialization: data.specialization
         });
-
       } catch (err) {
         console.error("Error fetching doctor:", err);
       }
     };
-
     fetchDoctor();
   }, []);
 
   return (
-    <>
-      <h1 className="text-4xl font-bold my-6">Doctor Dashboard</h1>
-
-      {/* ✅ Welcome Card */}
-      <div className="bg-blue-300 p-5 rounded-lg mb-6">
-        <h2 className="text-2xl font-semibold">
-          Welcome Dr. {doctor.name}
-        </h2>
-        <p>{doctor.specialization}</p>
+    <div className="p-8 space-y-8">
+      {/* ✅ Welcome Card: Now taking full width (w-full) with no max-width constraint */}
+      <div className="bg-blue-400 p-6 rounded-[2.5rem] shadow-sm flex items-center gap-6 w-full">
+        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+          <IoPerson className="text-blue-700 text-3xl" />
+        </div>
+        <div>
+          <p className="text-white text-xs font-bold uppercase tracking-widest opacity-90">Doctor Name</p>
+          <h2 className="text-2xl font-black text-black">
+            Dr. {doctor.name}
+          </h2>
+          <p className="text-blue-800 font-semibold text-sm">{doctor.specialization}</p>
+        </div>
       </div>
 
-      {/* Quick cards */}
-      <div className="grid md:grid-cols-2 gap-6">
-        
+      {/* Quick Navigation Cards */}
+      <div className="grid md:grid-cols-2 gap-8">
         {/* Profile */}
         <div
           onClick={() => navigate("profile")}
-          className="bg-blue-200 p-6 rounded-lg shadow text-center cursor-pointer hover:shadow-lg transition"
+          className="bg-[#93C5FD] p-6 rounded-[2.5rem] shadow-sm flex items-center gap-5 cursor-pointer hover:scale-[1.02] transition-transform"
         >
-          <FaUserDoctor className="text-4xl mx-auto mb-2 text-blue-700" />
-          <h2 className="text-lg font-semibold">My Profile</h2>
+          <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+            <FaUserDoctor className="text-blue-600 text-2xl" />
+          </div>
+          <div>
+            <p className="text-white text-xs font-bold uppercase tracking-widest">Section</p>
+            <h2 className="text-xl font-black text-black">My Profile</h2>
+          </div>
         </div>
 
         {/* Appointments */}
         <div
           onClick={() => navigate("appointments")}
-          className="bg-blue-200 p-6 rounded-lg shadow text-center cursor-pointer hover:shadow-lg transition"
+          className="bg-[#93C5FD] p-6 rounded-[2.5rem] shadow-sm flex items-center gap-5 cursor-pointer hover:scale-[1.02] transition-transform"
         >
-          <FaClipboardList className="text-4xl mx-auto mb-2 text-blue-700" />
-          <h2 className="text-lg font-semibold">My Appointments</h2>
+          <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+            <FaClipboardList className="text-blue-600 text-2xl" />
+          </div>
+          <div>
+            <p className="text-white text-xs font-bold uppercase tracking-widest">Section</p>
+            <h2 className="text-xl font-black text-black">My Appointments</h2>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -205,47 +221,47 @@ export function DProfile() {
       "https://plus.unsplash.com/premium_photo-1664476459351-59625a0fef11?q=80&w=687&auto=format&fit=crop",
   });
 
-useEffect(() => {
-  const fetchDoctor = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-      const email =
-        user.email ||
-        user.Email ||
-        localStorage.getItem("userEmail");
+        const email =
+          user.email ||
+          user.Email ||
+          localStorage.getItem("userEmail");
 
-      console.log("EMAIL:", email);
+        console.log("EMAIL:", email);
 
-      if (!email) {
-        console.log("No email found in localStorage");
-        return;
+        if (!email) {
+          console.log("No email found in localStorage");
+          return;
+        }
+
+        const res = await axios.get(
+          `https://localhost:7077/api/AddDoctors/DoctorByEmail/${email}`
+        );
+
+        console.log("API RESPONSE:", res.data);
+
+        const data = res.data;
+
+        setDoctor({
+          name: data.doctorName || data.DoctorName,
+          specialization: data.specialization || data.Specialization,
+          fees: data.fee || data.Fee,
+          contact: data.contact || data.Contact,
+          email: data.email || data.Email,
+          image: data.image || data.Image,
+        });
+
+      } catch (err) {
+        console.error("API ERROR:", err);
       }
+    };
 
-      const res = await axios.get(
-        `https://localhost:7077/api/AddDoctors/DoctorByEmail/${email}`
-      );
-
-      console.log("API RESPONSE:", res.data);
-
-      const data = res.data;
-
-      setDoctor({
-        name: data.doctorName || data.DoctorName,
-        specialization: data.specialization || data.Specialization,
-        fees: data.fee || data.Fee,
-        contact: data.contact || data.Contact,
-        email: data.email || data.Email,
-        image: data.image || data.Image,
-      });
-
-    } catch (err) {
-      console.error("API ERROR:", err);
-    }
-  };
-
-  fetchDoctor();
-}, []);
+    fetchDoctor();
+  }, []);
   return (
     <>
       <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border">
@@ -278,7 +294,7 @@ useEffect(() => {
             <InfoField label="Fees" value={doctor.fees} />
             <InfoField label="Contact" value={doctor.contact} />
             <InfoField label="Email" value={doctor.email} />
-           
+
 
           </div>
 
@@ -290,9 +306,16 @@ useEffect(() => {
 
 function InfoField({ label, value }) {
   return (
-    <div className="bg-blue-50 p-4 rounded-xl shadow">
-      <p className="text-gray-500 text-sm">{label}</p>
-      <p className="font-semibold">{value}</p>
+    <div className="bg-[#93C5FD] p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+      </div>
+      <div>
+        <p className="text-white text-[10px] font-bold uppercase tracking-widest leading-none mb-1">
+          {label}
+        </p>
+        <p className="font-black text-black text-lg">{value}</p>
+      </div>
     </div>
   );
 }
@@ -300,8 +323,6 @@ function InfoField({ label, value }) {
 /* APPOINTMENTS PAGE */
 
 import { FaSearch, FaTrash } from "react-icons/fa";
-
-
 
 
 export function Appointments() {
@@ -315,7 +336,7 @@ export function Appointments() {
     fetchAppointments();
   }, []);
 
-  // FETCH APPOINTMENTS
+  // FETCH
   const fetchAppointments = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -329,88 +350,84 @@ export function Appointments() {
 
       let data = [];
 
-      if (Array.isArray(res.data)) {
-        data = res.data;
-      } else if (res.data?.$values) {
-        data = res.data.$values;
-      } else if (res.data?.data) {
-        data = res.data.data;
-      }
+      if (Array.isArray(res.data)) data = res.data;
+      else if (res.data?.$values) data = res.data.$values;
+      else if (res.data?.data) data = res.data.data;
 
       setAppointments(data || []);
+
+      toast.success("Appointments Loaded ✅");
     } catch (err) {
       console.error("FETCH ERROR:", err);
+      toast.error("Failed to load appointments ❌");
       setAppointments([]);
     }
   };
 
-  // STATUS UPDATE (UPDATED ONLY)
-const updateStatus = (id, status) => {
-  const appointment = appointments.find((a) => a.id === id);
+  // STATUS UPDATE
+  const updateStatus = (id, status) => {
+    const appointment = appointments.find((a) => a.id === id);
 
-  setAppointments((prev) =>
-    prev.map((a) =>
-      a.id === id
-        ? {
+    setAppointments((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
             ...a,
             status: status === "Rejected" ? "Rejected" : "Accepted",
           }
-        : a
-    )
-  );
+          : a
+      )
+    );
 
-  // ACCEPT → only WhatsApp (unchanged)
-  if (status === "Accepted" && appointment) {
-    let message = `Hello,
+    // ACCEPT
+    if (status === "Accepted" && appointment) {
+      toast.success("Appointment Accepted ✅");
+
+      let message = `Hello,
 
 Your appointment is CONFIRMED ✅
 
 Patient: ${appointment.patientName}
-Reason: ${appointment.reason}
 Date: ${appointment.appointmentDate?.split("T")[0]}
-Time: ${appointment.timeSlot}
+Time: ${appointment.timeSlot}`;
 
-Thank you.`;
+      window.open(
+        `https://wa.me/91${appointment.contactNumber}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+    }
 
-    window.open(
-      `https://wa.me/91${appointment.contactNumber}?text=${encodeURIComponent(message)}`,
-      "_blank"
-    );
-  }
+    // REJECT
+    if (status === "Rejected" && appointment) {
+      axios
+        .delete(
+          `https://localhost:7077/api/BookAppointment/DeleteAppointment?id=${id}`
+        )
+        .then(() => {
+          setAppointments((prev) =>
+            prev.filter((a) => a.id !== id)
+          );
 
-  // ❌ REJECT → DELETE API + WhatsApp
-  if (status === "Rejected" && appointment) {
-    axios
-      .delete(
-        `https://localhost:7077/api/BookAppointment/DeleteAppointment?id=${id}`
-      )
-      .then(() => {
-        setAppointments((prev) =>
-          prev.filter((a) => a.id !== id)
-        );
+          toast.error("Appointment Rejected ❌");
 
-        let message = `Hello,
+          let message = `Hello,
 
 Your appointment has been CANCELLED ❌
 
-Patient: ${appointment.patientName}
-Reason: ${appointment.reason}
-Date: ${appointment.appointmentDate?.split("T")[0]}
-Time: ${appointment.timeSlot}
+Patient: ${appointment.patientName}`;
 
-Sorry for the inconvenience. Please reschedule.`;
+          window.open(
+            `https://wa.me/91${appointment.contactNumber}?text=${encodeURIComponent(message)}`,
+            "_blank"
+          );
+        })
+        .catch((err) => {
+          console.error("DELETE ERROR:", err);
+          toast.error("Failed to reject ❌");
+        });
+    }
+  };
 
-        window.open(
-          `https://wa.me/91${appointment.contactNumber}?text=${encodeURIComponent(message)}`,
-          "_blank"
-        );
-      })
-      .catch((err) => {
-        console.error("DELETE ERROR:", err);
-        alert("Failed to reject appointment");
-      });
-  }
-};
   // SEARCH
   const filteredAppointments = appointments.filter((a) =>
     (a?.patientName || "")
@@ -420,7 +437,6 @@ Sorry for the inconvenience. Please reschedule.`;
 
   // PAGINATION
   const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
-
   const start = (currentPage - 1) * itemsPerPage;
 
   const currentAppointments = filteredAppointments.slice(
@@ -428,26 +444,54 @@ Sorry for the inconvenience. Please reschedule.`;
     start + itemsPerPage
   );
 
+  // STATS (UNIQUE 🔥)
+  const total = appointments.length;
+  const accepted = appointments.filter(a => a.status === "Accepted").length;
+  const pending = appointments.filter(a => !a.status || a.status === "Pending").length;
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="p-6 bg-slate-100 min-h-screen">
+      <Toaster position="top-right" />
 
-        <h1 className="text-3xl font-bold mb-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* TITLE */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl font-black text-blue-600"
+        >
           Appointments
-        </h1>
+        </motion.h1>
 
-        <input
-          type="text"
-          placeholder="Search patient..."
-          className="w-full md:w-80 px-4 py-2 border rounded-lg mb-6"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        {/* STATS */}
+        <div className="grid md:grid-cols-3 gap-4">
+          <StatCard title="Total" value={total} />
+          <StatCard title="Accepted" value={accepted} />
+          <StatCard title="Pending" value={pending} />
+        </div>
 
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        {/* SEARCH */}
+        <div className="relative w-full md:w-80">
+          <FaSearch className="absolute left-3 top-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search patient..."
+            className="w-full pl-10 pr-4 py-2 rounded-xl border bg-white shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* TABLE */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-white rounded-2xl shadow overflow-hidden"
+        >
           <table className="w-full text-left">
 
-            <thead className="bg-gray-100 text-sm">
+            <thead className="bg-slate-50 text-sm">
               <tr>
                 <th className="p-3">Patient</th>
                 <th className="p-3">Contact</th>
@@ -463,8 +507,11 @@ Sorry for the inconvenience. Please reschedule.`;
             <tbody>
               {currentAppointments.length > 0 ? (
                 currentAppointments.map((a, index) => (
-                  <tr key={a.id || index} className="border-t hover:bg-gray-50">
-
+                  <motion.tr
+                    key={a.id || index}
+                    whileHover={{ scale: 1.01 }}
+                    className="border-t"
+                  >
                     <td className="p-3 font-medium">{a.patientName || "-"}</td>
                     <td className="p-3">{a.contactNumber || "-"}</td>
                     <td className="p-3">{a.reason || "-"}</td>
@@ -481,13 +528,13 @@ Sorry for the inconvenience. Please reschedule.`;
                     {/* STATUS */}
                     <td className="p-3">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold
+                        className={`px-3 py-1 rounded-full text-xs font-bold
                         ${a.status === "Accepted"
                             ? "bg-green-100 text-green-700"
                             : a.status === "Rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
+                              ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
                       >
                         {a.status || "Pending"}
                       </span>
@@ -496,29 +543,26 @@ Sorry for the inconvenience. Please reschedule.`;
                     {/* ACTION */}
                     <td className="p-3">
                       <div className="flex gap-2 justify-center">
-
                         <button
                           onClick={() => updateStatus(a.id, "Accepted")}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm shadow"
                         >
                           Accept
                         </button>
 
                         <button
                           onClick={() => updateStatus(a.id, "Rejected")}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm shadow"
                         >
                           Reject
                         </button>
-
                       </div>
                     </td>
-
-                  </tr>
+                  </motion.tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="p-6 text-center text-gray-500">
+                  <td colSpan="8" className="p-6 text-center text-slate-500">
                     No appointments found
                   </td>
                 </tr>
@@ -526,18 +570,21 @@ Sorry for the inconvenience. Please reschedule.`;
             </tbody>
 
           </table>
-        </div>
-
+        </motion.div>
       </div>
     </div>
   );
 }
 
+/* 🔥 STAT CARD */
 function StatCard({ title, value }) {
   return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-      <p className="text-gray-500 text-sm">{title}</p>
-      <h3 className="text-2xl font-bold text-gray-800 mt-2">{value}</h3>
-    </div>
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      className="bg-white p-4 rounded-2xl shadow border"
+    >
+      <p className="text-slate-500 text-sm">{title}</p>
+      <h3 className="text-xl font-bold">{value}</h3>
+    </motion.div>
   );
 }

@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import HomePage3 from "../HomePageComponent/HomePage3";
 import HomePage2 from "../HomePageComponent/HomePage2";
 import HomePage1 from "../HomePageComponent/HomePage1";
 import AboutUs from "../HomePageComponent/AboutUs";
 import CombinedHome from "../HomePageComponent/CombinedHome";
 import ProtectedRoute from "./ProtectedRoute";
-
 import WebLogAdmin from "../LoginComponent/WebLogAdmin";
 import PatientRegister from "../LoginComponent/PatientRegister";
-
 import AddDoctor from "../AdminDashboardComponent/AddDoctor";
+
 import AdminDashBoard, {
   ADashboard,
   ManageDoctors,
-  AppointmentHistory,
+  AppointmentsHistory,   // ✅ FIXED
   ManageUsers,
   NewQueries,
 } from "../AdminDashboardComponent/AdminDashBoard";
@@ -85,7 +83,7 @@ function RoutingPage() {
           <Route index element={<ADashboard />} />
           <Route path="users" element={<ManageUsers />} />
           <Route path="doctors" element={<ManageDoctors />} />
-          <Route path="appointments" element={<AppointmentHistory />} />
+          <Route path="appointments" element={<AppointmentsHistory />} />
           <Route path="queries" element={<NewQueries />} />
         </Route>
 

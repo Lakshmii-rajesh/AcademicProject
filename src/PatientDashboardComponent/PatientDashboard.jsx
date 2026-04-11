@@ -1,25 +1,25 @@
 import { useNavigate, NavLink, Outlet, Link } from "react-router-dom";
 import { IoPerson } from "react-icons/io5";
-import { RiArrowDropDownLine } from "react-icons/ri";
-import { ImCross } from "react-icons/im";
-import { MdEmail, MdLocationCity, MdPhone } from "react-icons/md";
-import { FaUser, FaHeartbeat, FaNotesMedical } from "react-icons/fa";
+import { MdEmail, MdPhone } from "react-icons/md";
+import { FaUser, FaHeartbeat, FaNotesMedical, FaUserMd, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaTint } from "react-icons/fa";
 import axios from "axios";
-import PropTypes from "prop-types";
 import React, { useState, useRef, useEffect } from "react";
-import { FaBars, FaHome, FaCalendarAlt, FaFileAlt } from "react-icons/fa";
-import { User, Stethoscope, Phone, Mail, MapPin } from "lucide-react";
-import { FaSquarePersonConfined } from "react-icons/fa6";
+import { FaBars, FaTimes} from "react-icons/fa";
 import { BiSolidUserCircle } from "react-icons/bi";
-
+import { motion, AnimatePresence } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
+import PatientSidebar from "./PatientSidebar";
 const BASE_URL = "https://localhost:7077/api";
 const DOCTOR_API = "https://localhost:7077/api/AddDoctors";
 
 /* ===================== MAIN LAYOUT ===================== */
+import { FiLogOut } from "react-icons/fi";
+
 export default function PatientDashboard() {
-  const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -31,71 +31,108 @@ export default function PatientDashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {/* NAVBAR */}
-      <div className="bg-blue-300 flex justify-between items-center px-6 py-4">
-        {!isOpen && (
-          <button onClick={() => setIsOpen(true)}>
-            <FaBars size={25} />
-          </button>
-        )}
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-        <div ref={dropdownRef}>
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-[#f4f7fb] text-slate-800"
+    >
+      <Toaster position="top-right" />
+
+      {/* 🔵 NAVBAR */}
+      
+      <motion.div
+        initial={{ y: -40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 w-full flex justify-between items-center px-6 h-16 bg-linear-to-r from-blue-500 to-blue-600 text-white shadow"
+      >
+        {/* ✅ LEFT SIDE */}
+        <div className="flex items-center gap-4">
+          
+          
+
+          {/* TITLE */}
+          <h1 className="text-xl font-bold tracking-wide">Cureonix</h1>
+        </div>
+
+        {/* ✅ RIGHT SIDE */}
+        <div ref={dropdownRef} className="relative">
           <div
-            className="flex items-center gap-2 cursor-pointer"
             onClick={() => setOpen(!open)}
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center cursor-pointer shadow"
           >
-            <IoPerson size={30} />
-            <p className="font-semibold">Patient</p>
-            <RiArrowDropDownLine size={30} />
+            <IoPerson className="text-blue-600 text-xl" />
           </div>
 
-          {open && (
-            <div className="absolute right-6 mt-2 bg-white border rounded">
-              <button
-                className="px-4 py-2 hover:bg-blue-200"
-                onClick={() => (window.location.href = "/")}
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute right-0 mt-3 w-44 bg-white rounded-lg shadow-lg p-2"
               >
-                Logout
-              </button>
+                <button
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded"
+                  onClick={() => {
+                    toast.success("Logged out 👋");
+                    setTimeout(() => (window.location.href = "/"), 1000);
+                  }}
+                >
+                  <FiLogOut />
+                  Sign out
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      {/* 🔵 SIDEBAR + CONTENT */}
+      <div className="flex">
+              <PatientSidebar
+                isCollapsed={sidebarCollapsed}
+                toggleCollapse={() =>
+                  setSidebarCollapsed((prev) => !prev)
+                }
+              />
+      
+              <div
+                className={`flex-1 transition-all duration-300 ${
+                  sidebarCollapsed ? "translate-x-24" : "translate-x-0"
+                }`}
+              >
+                <Outlet />
+              </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* SIDEBAR */}
-      <div
-        className={`fixed top-0 left-0 h-full w-64 bg-white transition-transform ${isOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+      {/* 🔵 FLOAT BACK BUTTON */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed bottom-6 right-6"
       >
-        <div className="flex justify-between items-center m-4 border-b pb-3">
-          <h2 className="font-bold">CUREONIX</h2>
-          <button onClick={() => setIsOpen(false)}>
-            <ImCross />
-          </button>
-        </div>
-
-        <nav>
-          <SidebarItem to="." icon={<FaHome />} label="Dashboard" />
-          <SidebarItem
-            to="book"
-            icon={<FaCalendarAlt />}
-            label="Book Appointment"
-          />
-          <SidebarItem to="history" icon={<FaFileAlt />} label="History" />
-          <SidebarItem to="profile" icon={<IoPerson />} label="Profile" />
-        </nav>
-      </div>
-
-      {/* CONTENT */}
-      <div className={`p-6 ${isOpen ? "ml-64" : ""}`}>
-        <Outlet />
-      </div>
-    </div>
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="px-5 py-3 rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition"
+        >
+          ← Back
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
-
 /* ===================== SIDEBAR ITEM ===================== */
 function SidebarItem({ to, icon, label }) {
   return (
@@ -103,16 +140,19 @@ function SidebarItem({ to, icon, label }) {
       to={to}
       end={to === "."}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-6 py-3 ${isActive ? "bg-blue-300 font-semibold" : "hover:bg-blue-200"
+        `flex items-center gap-3 px-4 py-3 rounded-xl mx-2 text-sm transition-all duration-200
+        ${
+          isActive
+            ? "bg-blue-600 text-white shadow"
+            : "text-slate-600 hover:bg-blue-50 hover:text-blue-600"
         }`
       }
     >
-      {icon}
-      {label}
+      <span className="text-lg">{icon}</span>
+      <span className="font-medium">{label}</span>
     </NavLink>
   );
 }
-
 /* ===================== DASHBOARD ===================== */
 function StatCard({ title, value }) {
   return (
@@ -122,8 +162,6 @@ function StatCard({ title, value }) {
     </div>
   );
 }
-
-
 export function PDashboard() {
   const navigate = useNavigate();
 
@@ -133,171 +171,204 @@ export function PDashboard() {
     phone: "Loading..."
   });
 
-useEffect(() => {
-  const fetchPatient = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const email = user?.email;
+  useEffect(() => {
+    const fetchPatient = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const email = user?.email;
 
-      if (!email) {
-        console.log("No email found in localStorage");
-        return;
+        if (!email) return;
+
+        const res = await axios.get(
+          `https://localhost:7077/api/Regester/PatientByEmail/${email}`
+        );
+
+        const data = res.data;
+
+        setPatientInfo({
+          name: data.name,
+          email: data.email,
+          phone: data.phone
+        });
+
+      } catch (err) {
+        console.error("Error fetching patient info:", err);
       }
+    };
 
-      const res = await axios.get(
-        `https://localhost:7077/api/Regester/PatientByEmail/${email}`
-      );
-
-      const data = res.data;
-
-      setPatientInfo({
-        name: data.name,
-        email: data.email,
-        phone: data.phone
-      });
-
-    } catch (err) {
-      console.error("Error fetching patient info:", err);
-    }
-  };
-
-  fetchPatient();
-}, []);
+    fetchPatient();
+  }, []);
 
   return (
-    <>
-      {/* PAGE TITLE */}
-      <h1 className="text-4xl font-bold my-6">Patient Dashboard</h1>
+    <div className="md:py-2 px-4 min-h-full space-y-8">
 
-      {/* WELCOME CARD */}
-      <div className="bg-blue-300 p-5 rounded-lg mb-6">
-        <h2 className="text-2xl font-semibold">
+      
+      {/* WELCOME CARD (match admin gradient + glow) */}
+      <div className="relative overflow-hidden rounded-2xl p-6 shadow-sm border border-blue-200 bg-linear-to-r from-blue-400 via-blue-500 to-blue-600 text-white">
+
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full translate-x-12 -translate-y-12 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-300/20 rounded-full -translate-x-8 translate-y-8 blur-xl"></div>
+
+        <h2 className="text-2xl font-black">
           Welcome {patientInfo.name}
         </h2>
-        <p>Here is your health summary</p>
+
+        <p className="text-blue-100 mt-1 font-medium">
+          Here is your health summary
+        </p>
       </div>
 
-      {/* PATIENT DETAILS */}
-      <div className="bg-white p-6 rounded-lg mb-6">
-        <h3 className="text-xl font-semibold mb-6">Patient Details</h3>
+      {/* PATIENT DETAILS (match admin cards) */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <h3 className="text-xl font-bold text-slate-800 mb-6">
+          Patient Details
+        </h3>
 
-          <div className="flex items-center gap-3">
-            <FaUser className="text-gray-500" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <div className="flex items-center gap-4 p-5 rounded-2xl border border-blue-200 bg-blue-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <div className="p-3 bg-white rounded-xl shadow-sm">
+              <FaUser className="text-blue-500 text-xl" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">Name</p>
-              <p className="font-semibold">{patientInfo.name}</p>
+              <p className="text-xs font-bold text-white uppercase tracking-wider">
+                Name
+              </p>
+              <p className="font-black text-black text-lg">
+                {patientInfo.name}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <MdEmail className="text-gray-500" />
+          <div className="flex items-center gap-4 p-5 rounded-2xl border border-blue-200 bg-blue-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <div className="p-3 bg-white rounded-xl shadow-sm">
+              <MdEmail className="text-indigo-500 text-xl" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="font-semibold">{patientInfo.email}</p>
+              <p className="text-xs font-bold text-white uppercase tracking-wider">
+                Email
+              </p>
+              <p className="font-black text-black text-lg">
+                {patientInfo.email}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <MdPhone className="text-gray-500" />
+          <div className="flex items-center gap-4 p-5 rounded-2xl border border-blue-200 bg-blue-300 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <div className="p-3 bg-white rounded-xl shadow-sm">
+              <MdPhone className="text-emerald-500 text-xl" />
+            </div>
             <div>
-              <p className="text-sm text-gray-500">Phone</p>
-              <p className="font-semibold">{patientInfo.phone}</p>
+              <p className="text-xs font-bold text-white uppercase tracking-wider">
+                Phone
+              </p>
+              <p className="font-black text-black text-lg">
+                {patientInfo.phone}
+              </p>
             </div>
           </div>
 
         </div>
       </div>
 
-      {/* HEALTH SECTION (UNCHANGED) */}
-      <div className="bg-white p-6 rounded-lg mt-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+      {/* HEALTH SECTION (match admin card style) */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
           <FaHeartbeat className="text-red-500" />
           Health Tips & Reminders
         </h3>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-          <div className="space-y-3">
-            <div>
-              <p className="font-medium">💧 Stay Hydrated</p>
-              <p className="text-sm text-gray-600">
+          <div className="space-y-4">
+
+            <div className="p-4 rounded-xl hover:bg-blue-50 transition">
+              <p className="font-bold text-slate-800">💧 Stay Hydrated</p>
+              <p className="text-sm text-slate-500">
                 Drink at least 8 glasses of water daily.
               </p>
             </div>
 
-            <div>
-              <p className="font-medium">🩺 Regular Check-ups</p>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 rounded-xl hover:bg-blue-50 transition">
+              <p className="font-bold text-slate-800">🩺 Regular Check-ups</p>
+              <p className="text-sm text-slate-500">
                 Visit doctor every 6–12 months.
               </p>
             </div>
 
-            <div>
-              <p className="font-medium">🥗 Healthy Diet</p>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 rounded-xl hover:bg-blue-50 transition">
+              <p className="font-bold text-slate-800">🥗 Healthy Diet</p>
+              <p className="text-sm text-slate-500">
                 Eat fruits, vegetables and balanced meals.
               </p>
             </div>
+
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <p className="font-medium">🏃 Exercise</p>
-              <p className="text-sm text-gray-600">
+          <div className="space-y-4">
+
+            <div className="p-4 rounded-xl hover:bg-blue-50 transition">
+              <p className="font-bold text-slate-800">🏃 Exercise</p>
+              <p className="text-sm text-slate-500">
                 30 minutes daily walking or workout.
               </p>
             </div>
 
-            <div>
-              <p className="font-medium">🚑 Emergency</p>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 rounded-xl hover:bg-blue-50 transition">
+              <p className="font-bold text-slate-800">🚑 Emergency</p>
+              <p className="text-sm text-slate-500">
                 Ambulance: 108 | Police: 100
               </p>
             </div>
 
-            <div>
-              <p className="font-medium">🧠 Mental Health</p>
-              <p className="text-sm text-gray-600">
+            <div className="p-4 rounded-xl hover:bg-blue-50 transition">
+              <p className="font-bold text-slate-800">🧠 Mental Health</p>
+              <p className="text-sm text-slate-500">
                 Take breaks and reduce stress.
               </p>
             </div>
+
           </div>
 
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500">
-          <p className="text-sm text-blue-700">
-            <strong>Reminder:</strong> Healthy lifestyle = Better life 💙
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <p className="text-sm text-blue-700 font-bold">
+            Reminder: Healthy lifestyle = Better life 💙
           </p>
         </div>
+
       </div>
 
-      {/* BUTTONS */}
-      <div className="flex gap-4 my-5">
+      {/* ACTION BUTTONS (match admin hover style) */}
+      <div className="flex gap-4">
+
         <button
           onClick={() => navigate("book")}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold shadow hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
         >
           Book Appointment
         </button>
 
         <Link
           to="profile"
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          className="px-6 py-3 rounded-xl bg-green-500 text-white font-bold shadow hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
         >
           View Profile
         </Link>
+
       </div>
-    </>
+
+    </div>
   );
 }
-
+// 👉 IF IMAGE IS IN SRC/ASSETS → USE THIS
+// import bgImage from "../assets/bookappointmentImage.png";
 export function BookAppointment() {
   const BASE_URL = "https://localhost:7077/api";
 
-  // ================= STATES =================
   const [appointments, setAppointments] = useState([]);
 
   const [patientName, setPatientName] = useState("");
@@ -316,7 +387,6 @@ export function BookAppointment() {
       try {
         const res = await axios.get(`${BASE_URL}/AddDoctors`);
 
-        // ✅ NORMALIZE DATA (FIXES YOUR ISSUE)
         const normalized = (res.data || []).map((d) => ({
           id: d.id || d.Id,
           doctorName: d.doctorName || d.DoctorName,
@@ -325,7 +395,8 @@ export function BookAppointment() {
 
         setDoctors(normalized);
       } catch (err) {
-        console.error("Failed to fetch doctors:", err);
+        console.error(err);
+        toast.error("Failed to load doctors");
       }
     };
 
@@ -337,8 +408,8 @@ export function BookAppointment() {
     if (treatment) {
       const filtered = doctors.filter(
         (doc) =>
-          doc.specialization?.trim().toLowerCase() ===
-          treatment.trim().toLowerCase()
+          doc.specialization?.toLowerCase() ===
+          treatment.toLowerCase()
       );
 
       setDoctor(filtered.length > 0 ? filtered[0].doctorName : "");
@@ -347,221 +418,262 @@ export function BookAppointment() {
     }
   }, [treatment, doctors]);
 
-  // ================= BOOK APPOINTMENT =================
-const handleBook = async () => {
-  if (
-    !patientName ||
-    !contact ||
-    !doctor ||
-    !treatment ||
-    !date ||
-    !time ||
-    !city
-  ) {
-    alert("Please fill all fields");
-    return;
-  }
+  // ================= BOOK =================
+  const handleBook = async () => {
+    if (!patientName || !contact || !doctor || !treatment || !date || !time || !city) {
+      toast.error("Fill all fields 😑");
+      return;
+    }
 
-  const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(localStorage.getItem("user"));
 
-  if (!user || !user.email) {
-    alert("User not logged in properly");
-    return;
-  }
+    if (!user?.email) {
+      toast.error("User not logged in");
+      return;
+    }
 
- const newAppointment = {
-  patientName,
-  contactNumber: contact,
-  doctorName: doctor,
-  reason: treatment,
-  Specialization: treatment,   // ✅ ADD THIS LINE ONLY
-  appointmentDate: date,
-  timeSlot: time,
-  city,
-  email: user.email,
-};
-  console.log("Sending Data:", newAppointment);
+    const newAppointment = {
+      patientName,
+      contactNumber: contact,
+      doctorName: doctor,
+      reason: treatment,
+      Specialization: treatment,
+      appointmentDate: date,
+      timeSlot: time,
+      city,
+      email: user.email,
+    };
 
-  try {
-    await axios.post(
-      `${BASE_URL}/BookAppointment/BookAppointment`,
-      newAppointment
-    );
+    try {
+      await axios.post(
+        `${BASE_URL}/BookAppointment/BookAppointment`,
+        newAppointment
+      );
 
-    alert("Appointment booked successfully");
+      toast.success("Appointment Booked 🎉");
 
-    // ❌ REMOVE THIS (because API returns string)
-    // setAppointments([...appointments, response.data]);
+      setAppointments((prev) => [...prev, { ...newAppointment, status: "Pending" }]);
 
-    setAppointments((prev) => [
-      ...prev,
-      {
-        ...newAppointment,
-        status: "Pending",
-      },
-    ]);
+      // RESET
+      setPatientName("");
+      setContact("");
+      setTreatment("");
+      setDoctor("");
+      setCity("");
+      setDate("");
+      setTime("");
+    } catch (error) {
+      console.error(error);
+      toast.error("Booking failed ❌");
+    }
+  };
 
-    // RESET
-    setPatientName("");
-    setContact("");
-    setTreatment("");
-    setDoctor("");
-    setCity("");
-    setDate("");
-    setTime("");
-  } catch (error) {
-    console.error("API ERROR:", error?.response?.data || error.message);
-    alert(
-      error?.response?.data || "Error saving appointment (check backend)"
-    );
-  }
-};
-
-  // ================= FILTER DOCTORS =================
   const filteredDoctors = doctors.filter(
     (doc) =>
-      doc.specialization?.trim().toLowerCase() ===
-      treatment?.trim().toLowerCase()
+      doc.specialization?.toLowerCase() ===
+      treatment?.toLowerCase()
   );
 
-  // ================= UI =================
   return (
-    <div
-      className="min-h-screen w-full bg-cover bg-center bg-no-repeat flex items-center px-10"
-      style={{ backgroundImage: "url('/bookappointmentImage.png')" }}
-    >
-      <div className="w-full md:w-[520px] p-10 shadow-xl flex flex-col justify-center rounded-lg bg-white">
-        <h2 className="text-3xl font-bold mb-6">Book Appointment</h2>
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-100 to-purple-100 flex items-center justify-center p-4">
+      <Toaster position="top-right" />
 
-        <div className="flex flex-col gap-4">
+      {/* FORM CARD */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-2xl bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 md:p-12"
+      >
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-800 mb-2">Book Your Appointment</h2>
+          <p className="text-gray-600">Schedule your visit with our expert doctors</p>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Patient Name */}
-          <input
-            type="text"
-            placeholder="Patient Name"
-            className="border p-2 rounded"
-            value={patientName}
-            onChange={(e) => setPatientName(e.target.value)}
-          />
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Patient Name</label>
+            <div className="relative">
+              <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Enter your name"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+              />
+            </div>
+          </div>
 
           {/* Contact */}
-          <input
-            type="text"
-            placeholder="Contact"
-            className="border p-2 rounded"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-          />
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+            <div className="relative">
+              <MdPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Enter your phone"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+              />
+            </div>
+          </div>
 
           {/* Treatment */}
-          <select
-            className="border p-2 rounded"
-            value={treatment}
-            onChange={(e) => setTreatment(e.target.value)}
-          >
-            <option value="">Select Treatment</option>
-            <option value="Dental">Dental</option>
-            <option value="Cardiology">Cardiology</option>
-            <option value="Eye">Eye</option>
-            <option value="Orthopedic">Orthopedic</option>
-            <option value="Neurology">Neurology</option>
-            <option value="Dermatology">Dermatology</option>
-            <option value="ENT">ENT</option>
-            <option value="Gynecology">Gynecology</option>
-            <option value="Pediatrics">Pediatrics</option>
-            <option value="General Medicine">General Medicine</option>
-          </select>
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Treatment Type</label>
+            <div className="relative">
+              <FaNotesMedical className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <select
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                value={treatment}
+                onChange={(e) => setTreatment(e.target.value)}
+              >
+                <option value="">Select Treatment</option>
+                <option>Dental</option>
+                <option>Cardiology</option>
+                <option>Eye</option>
+                <option>Orthopedic</option>
+                <option>Neurology</option>
+                <option>Dermatology</option>
+                <option>ENT</option>
+                <option>Gynecology</option>
+                <option>Pediatrics</option>
+                <option>General Medicine</option>
+              </select>
+            </div>
+          </div>
 
           {/* Doctor */}
-          <select
-            className="border p-2 rounded"
-            value={doctor}
-            onChange={(e) => setDoctor(e.target.value)}
-          >
-            <option value="">Select Doctor</option>
-
-            {filteredDoctors.length > 0 ? (
-              filteredDoctors.map((doc) => (
-                <option key={doc.id} value={doc.doctorName}>
-                  {doc.doctorName} ({doc.specialization})
-                </option>
-              ))
-            ) : (
-              <option>No doctors available</option>
-            )}
-          </select>
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
+            <div className="relative">
+              <FaUserMd className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <select
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                value={doctor}
+                onChange={(e) => setDoctor(e.target.value)}
+              >
+                <option value="">Select Doctor</option>
+                {filteredDoctors.length > 0 ? (
+                  filteredDoctors.map((doc) => (
+                    <option key={doc.id} value={doc.doctorName}>
+                      {doc.doctorName} ({doc.specialization})
+                    </option>
+                  ))
+                ) : (
+                  <option>No doctors available</option>
+                )}
+              </select>
+            </div>
+          </div>
 
           {/* City */}
-          <select
-            className="border p-2 rounded"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-          >
-            <option value="">Select City</option>
-            <option value="Bangalore">Bangalore</option>
-            <option value="Mysore">Mysore</option>
-            <option value="Mangalore">Mangalore</option>
-            <option value="Hubli">Hubli</option>
-            <option value="Dharwad">Dharwad</option>
-            <option value="Belgaum">Belgaum</option>
-            <option value="Davangere">Davangere</option>
-            <option value="Shimoga">Shimoga</option>
-            <option value="Tumkur">Tumkur</option>
-            <option value="Udupi">Udupi</option>
-            <option value="Other">Other</option>
-          </select>
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+            <div className="relative">
+              <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <select
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              >
+                <option value="">Select City</option>
+                <option>Bangalore</option>
+                <option>Mysore</option>
+                <option>Mangalore</option>
+                <option>Hubli</option>
+              </select>
+            </div>
+          </div>
 
           {/* Date */}
-          <input
-            type="date"
-            className="border p-2 rounded"
-            value={date}
-            min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
-            onChange={(e) => {
-              const selected = new Date(e.target.value + "T00:00:00");
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Appointment Date</label>
+            <div className="relative">
+              <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="date"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={date}
+                min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+                onChange={(e) => {
+                  const selected = new Date(e.target.value);
 
-              if (selected.getDay() === 0) {
-                alert("Sunday appointments are not available");
-                setDate("");
-                return;
-              }
+                  if (selected.getDay() === 0) {
+                    toast.error("No Sunday booking 🚫");
+                    setDate("");
+                    return;
+                  }
 
-              setDate(e.target.value);
-            }}
-          />
+                  setDate(e.target.value);
+                }}
+              />
+            </div>
+          </div>
 
           {/* Time */}
-          <select
-            className="border p-2 rounded"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          >
-            <option value="">Select Time</option>
-            <option value="10:00 AM">10:00 AM</option>
-            <option value="11:00 AM">11:00 AM</option>
-            <option value="12:00 PM">12:00 PM</option>
-            <option value="02:00 PM">02:00 PM</option>
-            <option value="03:00 PM">03:00 PM</option>
-            <option value="04:00 PM">04:00 PM</option>
-          </select>
-
-          {/* Button */}
-          <button
-            onClick={handleBook}
-            className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-          >
-            Confirm Appointment
-          </button>
+          <div className="relative md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time Slot</label>
+            <div className="relative">
+              <FaClock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <select
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              >
+                <option value="">Select Time</option>
+                <option>10:00 AM</option>
+                <option>11:00 AM</option>
+                <option>12:00 PM</option>
+                <option>02:00 PM</option>
+                <option>03:00 PM</option>
+              </select>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          onClick={handleBook}
+          className="w-full mt-8 bg-linear-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          Confirm Appointment 🚀
+        </motion.button>
+      </motion.div>
     </div>
   );
 }
-
+/* ================= REUSABLE INPUT ================= */
+function Input({ value, setValue, placeholder }) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+    />
+  );
+}
+/* ================= REUSABLE SELECT ================= */
+function Select({ value, setValue, children }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+    >
+      {children}
+    </select>
+  );
+}
 // Appointment History Component
 export function AppointmentHistoryPatient() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-100 to-teal-50 p-6">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-slate-100 to-teal-50 p-6">
 
       <div className="max-w-5xl mx-auto">
 
@@ -657,107 +769,145 @@ export function AppointmentHistoryPatient() {
   );
 }
 // Profile
-
-
 export function Profile() {
   const [info, setInfo] = useState(null);
   const navigate = useNavigate();
 
-useEffect(() => {
-  const fetchProfile = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const email = user?.email;
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        const email = user?.email;
 
-      if (!email) return;
+        if (!email) return;
 
-      const res = await axios.get(
-        `https://localhost:7077/api/Regester/PatientProfileByEmail/${email}`
-      );
+        const res = await axios.get(
+          `https://localhost:7077/api/Regester/PatientProfileByEmail/${email}`
+        );
 
-      setInfo(res.data);
+        setInfo(res.data);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
 
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-    }
-  };
-
-  fetchProfile();
-}, []);
+    fetchProfile();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("userEmail");
     navigate("/");
   };
 
-  // ⏳ Loading state
+  // ⏳ Loading
   if (!info) {
-    return <h2 className="text-center mt-10">Loading profile...</h2>;
+    return (
+      <div className="flex justify-center mt-20">
+        <motion.h2
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="text-lg font-semibold text-gray-600"
+        >
+          Loading profile...
+        </motion.h2>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-lg mx-auto bg-gradient-to-b from-blue-100 to-white rounded-3xl shadow-2xl p-6 mt-10 border border-gray-200">
-
-      {/* Avatar + Name */}
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="
+        max-w-md mx-auto mt-16 p-6 
+        rounded-3xl 
+        bg-white/70 backdrop-blur-xl
+        shadow-2xl border border-gray-200
+      "
+    >
+      {/* 🔥 Avatar + Name */}
       <div className="flex flex-col items-center mb-6">
-        {info.image ? (
-          <img
-            src={info.image}
-            alt="patient"
-            className="w-24 h-24 rounded-full object-cover mb-4 border border-gray-300"
-          />
-        ) : (
-          <div className="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center text-white text-4xl mb-4">
-            {info.name?.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative"
+        >
+          {/* Ring */}
+          <div className="absolute inset-0 rounded-full border-4 border-blue-500/30 scale-110"></div>
 
-        <h2 className="text-2xl font-bold text-gray-800">{info.name}</h2>
+          {info.image ? (
+            <img
+              src={info.image}
+              alt="patient"
+              className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+            />
+          ) : (
+            <div className="w-24 h-24 bg-linear-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+              {info.name?.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </motion.div>
+
+        <h2 className="text-2xl font-bold text-gray-800 mt-4">
+          {info.name}
+        </h2>
+        <p className="text-sm text-gray-500">Patient</p>
       </div>
 
-      {/* Info */}
-      <div className="grid gap-4 text-gray-700">
-        <div className="flex items-center gap-3">
-          <BiSolidUserCircle className="text-blue-600 w-6 h-6" />
-          <span className="font-semibold w-24">Name:</span>
-          <span>{info.name}</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <MdPhone className="text-blue-600 w-6 h-6" />
-          <span className="font-semibold w-24">Phone:</span>
-          <span>{info.phone}</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <MdEmail className="text-blue-600 w-6 h-6" />
-          <span className="font-semibold w-24">Email:</span>
-          <span>{info.email}</span>
-        </div>
+      {/* 🔥 Info */}
+      <div className="space-y-3 text-gray-700">
+        {[
+          { icon: <BiSolidUserCircle />, label: "Name", value: info.name },
+          { icon: <MdPhone />, label: "Phone", value: info.phone },
+          { icon: <MdEmail />, label: "Email", value: info.email },
+        ].map((item, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.15 }}
+            className="
+              flex items-center gap-3 p-3 
+              rounded-xl bg-white/80 
+              border shadow-sm hover:shadow-md 
+              transition
+            "
+          >
+            <div className="text-blue-600 text-xl">{item.icon}</div>
+            <span className="font-semibold w-20">{item.label}:</span>
+            <span className="truncate">{item.value}</span>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Logout */}
-      <div className="mt-6 flex justify-center">
+      {/* 🔥 Logout */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mt-8 flex justify-center"
+      >
         <button
           onClick={handleLogout}
-          className="px-6 py-2 rounded-full text-white font-semibold bg-blue-600 hover:bg-blue-700"
+          className="
+            flex items-center gap-2 px-6 py-3 
+            rounded-full 
+            bg-linear-to-r from-red-500 to-red-600 
+            text-white font-semibold 
+            shadow-lg hover:shadow-2xl 
+            hover:scale-105 active:scale-95 
+            transition-all duration-300
+          "
         >
+          <FiLogOut />
           Logout
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
-
-Profile.propTypes = {
-  patient: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    email: PropTypes.string.isRequired,
-    phone: PropTypes.string.isRequired,
-    city: PropTypes.string.isRequired,
-    image: PropTypes.string,
-  }).isRequired,
-};
 
 export function MedicalHistory() {
   // Example dynamic data (could come from props or API)
@@ -789,7 +939,7 @@ export function MedicalHistory() {
   ]);
 
   return (
-    <div className="max-w-md mx-auto bg-gradient-to-b from-blue-50 to-white p-6 rounded-3xl shadow-2xl mt-10 border border-gray-200">
+    <div className="max-w-md mx-auto bg-linear-to-b from-blue-50 to-white p-6 rounded-3xl shadow-2xl mt-10 border border-gray-200">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Medical History
       </h2>
